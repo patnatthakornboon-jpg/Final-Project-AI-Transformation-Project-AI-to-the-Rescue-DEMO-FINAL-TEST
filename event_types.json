@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "description": "Preset ของประเภทงาน: layout เริ่มต้น และส่วนประกอบ (components) ที่งานนั้นมักต้องใช้"
+  },
+  "budget_tiers": [
+    { "id": "basic", "name_th": "ประหยัด", "rank": 1, "layout_density": "tight" },
+    { "id": "standard", "name_th": "มาตรฐาน", "rank": 2, "layout_density": "standard" },
+    { "id": "premium", "name_th": "พรีเมียม", "rank": 3, "layout_density": "comfort" }
+  ],
+  "event_types": [
+    {
+      "id": "seminar", "name_th": "งานสัมมนา",
+      "default_layout": "theater",
+      "allowed_layouts": ["theater", "classroom", "cabaret"],
+      "default_components": ["stage", "registration", "av_booth", "buffet"],
+      "optional_components": ["photo_corner", "lounge", "booths"],
+      "min_people": 10, "max_people": 1000
+    },
+    {
+      "id": "conference", "name_th": "งานประชุมวิชาการ/คอนเฟอเรนซ์",
+      "default_layout": "theater",
+      "allowed_layouts": ["theater", "classroom", "cabaret"],
+      "default_components": ["stage", "registration", "av_booth", "buffet", "booths"],
+      "optional_components": ["photo_corner", "lounge"],
+      "min_people": 30, "max_people": 2000
+    },
+    {
+      "id": "workshop", "name_th": "เวิร์กชอป/อบรม",
+      "default_layout": "classroom",
+      "allowed_layouts": ["classroom", "cabaret", "u_shape"],
+      "default_components": ["stage", "registration"],
+      "optional_components": ["buffet", "av_booth"],
+      "min_people": 10, "max_people": 200
+    },
+    {
+      "id": "wedding_banquet", "name_th": "งานแต่งงาน/เลี้ยงโต๊ะจีน",
+      "default_layout": "banquet",
+      "allowed_layouts": ["banquet", "cabaret"],
+      "default_components": ["stage", "registration", "buffet", "photo_corner", "dance_floor"],
+      "optional_components": ["av_booth", "lounge"],
+      "min_people": 30, "max_people": 1000
+    },
+    {
+      "id": "product_launch", "name_th": "งานเปิดตัวสินค้า",
+      "default_layout": "theater",
+      "allowed_layouts": ["theater", "cocktail"],
+      "default_components": ["stage", "registration", "av_booth", "photo_corner"],
+      "optional_components": ["buffet", "lounge", "booths"],
+      "min_people": 30, "max_people": 800
+    },
+    {
+      "id": "networking", "name_th": "งานเน็ตเวิร์กกิ้ง/สังสรรค์",
+      "default_layout": "cocktail",
+      "allowed_layouts": ["cocktail", "cabaret"],
+      "default_components": ["registration", "buffet", "photo_corner"],
+      "optional_components": ["stage", "av_booth", "lounge"],
+      "min_people": 20, "max_people": 800
+    },
+    {
+      "id": "exhibition", "name_th": "งานนิทรรศการ",
+      "default_layout": "cocktail",
+      "allowed_layouts": ["cocktail"],
+      "default_components": ["registration", "booths", "stage"],
+      "optional_components": ["buffet", "photo_corner", "lounge", "av_booth"],
+      "min_people": 30, "max_people": 3000
+    }
+  ]
+}

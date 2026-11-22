@@ -1,0 +1,535 @@
+{
+  "_meta": {
+    "description": "แคตตาล็อกอุปกรณ์พร้อมกฎการคำนวณจำนวน และราคาประมาณต่อวันงาน (บาท)",
+    "price_note": "ราคาทุกรายการเป็นค่าประมาณเพื่อการวางแผน ยังไม่ได้มาจากใบเสนอราคาจริง (ร้านเช่าในไทยส่วนใหญ่ไม่เผยแพร่ราคา ให้ 'ขอใบเสนอราคา'). จุดอ้างอิงที่ตรวจได้: ชุดบูธ 3 ตร.ม. พร้อมโต๊ะและปลั๊ก 2,000 บาท และปลั๊กเพิ่ม 300 บาท [จุฬาฯ, ไม่ระบุปี]; ราคากลางภาครัฐ (19 ต.ค. 2566) อาหารบุฟเฟต์เอกชน 500 บาท/คน/มื้อ อาหารว่าง 50 บาท/คน/มื้อ สถานที่พร้อมอุปกรณ์ 5,000-15,000 บาท/วัน/รอบ [ONEP]. ควรเก็บใบเสนอราคาอย่างน้อย 3 ราย แล้วปรับราคาในไฟล์นี้ รายละเอียดใน docs/DATA_SOURCES.md",
+    "rule_types": [
+      "fixed",
+      "per_n_people",
+      "per_layout_unit",
+      "per_total_area",
+      "per_component_area"
+    ]
+  },
+  "categories": [
+    {
+      "id": "seating",
+      "name_th": "เก้าอี้และโต๊ะ"
+    },
+    {
+      "id": "stage",
+      "name_th": "เวทีและฉาก"
+    },
+    {
+      "id": "audio",
+      "name_th": "ระบบเสียง"
+    },
+    {
+      "id": "visual",
+      "name_th": "ภาพและแสง"
+    },
+    {
+      "id": "food",
+      "name_th": "อาหารและเครื่องดื่ม"
+    },
+    {
+      "id": "registration",
+      "name_th": "ลงทะเบียนและป้าย"
+    },
+    {
+      "id": "power_network",
+      "name_th": "ไฟฟ้าและเครือข่าย"
+    },
+    {
+      "id": "safety",
+      "name_th": "ความปลอดภัย"
+    },
+    {
+      "id": "decor",
+      "name_th": "ตกแต่ง"
+    }
+  ],
+  "items": [
+    {
+      "id": "chair",
+      "name_th": "เก้าอี้",
+      "category": "seating",
+      "unit": "ตัว",
+      "price_thb": 15,
+      "tier_min": "basic",
+      "requires_layouts": [
+        "theater",
+        "classroom",
+        "banquet",
+        "cabaret",
+        "u_shape"
+      ],
+      "rule": {
+        "type": "per_n_people",
+        "n": 1,
+        "spare_ratio": 0.05
+      }
+    },
+    {
+      "id": "round_table",
+      "name_th": "โต๊ะกลม (พร้อมผ้าคลุม)",
+      "category": "seating",
+      "unit": "ตัว",
+      "price_thb": 250,
+      "tier_min": "basic",
+      "requires_layouts": [
+        "banquet",
+        "cabaret"
+      ],
+      "rule": {
+        "type": "per_layout_unit"
+      }
+    },
+    {
+      "id": "long_table",
+      "name_th": "โต๊ะยาว 1.8 ม.",
+      "category": "seating",
+      "unit": "ตัว",
+      "price_thb": 120,
+      "tier_min": "basic",
+      "requires_layouts": [
+        "classroom",
+        "u_shape"
+      ],
+      "rule": {
+        "type": "per_layout_unit"
+      }
+    },
+    {
+      "id": "cocktail_table",
+      "name_th": "โต๊ะค็อกเทลสูง",
+      "category": "seating",
+      "unit": "ตัว",
+      "price_thb": 200,
+      "tier_min": "basic",
+      "requires_layouts": [
+        "cocktail"
+      ],
+      "rule": {
+        "type": "per_layout_unit"
+      }
+    },
+    {
+      "id": "stage_platform",
+      "name_th": "แท่นเวที (ตาราง ม. ของพื้นเวที)",
+      "category": "stage",
+      "unit": "ตร.ม.",
+      "price_thb": 180,
+      "tier_min": "basic",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "per_component_area",
+        "component": "stage",
+        "sqm_per_unit": 1
+      }
+    },
+    {
+      "id": "backdrop",
+      "name_th": "ฉากหลังเวที (Backdrop)",
+      "category": "stage",
+      "unit": "ชุด",
+      "price_thb": 6000,
+      "tier_min": "basic",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "podium",
+      "name_th": "โพเดียมพูด",
+      "category": "stage",
+      "unit": "ตัว",
+      "price_thb": 800,
+      "tier_min": "basic",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "stage_skirt_carpet",
+      "name_th": "พรมปูเวที/ผ้าคลุมขอบเวที",
+      "category": "stage",
+      "unit": "ชุด",
+      "price_thb": 2500,
+      "tier_min": "standard",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "speaker_pa",
+      "name_th": "ลำโพง PA",
+      "category": "audio",
+      "unit": "ตัว",
+      "price_thb": 1500,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_n_people",
+        "n": 60,
+        "min_qty": 2,
+        "round_even": true
+      }
+    },
+    {
+      "id": "mixer",
+      "name_th": "มิกเซอร์เสียง",
+      "category": "audio",
+      "unit": "เครื่อง",
+      "price_thb": 2000,
+      "tier_min": "basic",
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "wireless_mic",
+      "name_th": "ไมค์ไร้สาย",
+      "category": "audio",
+      "unit": "ตัว",
+      "price_thb": 500,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "min_qty": 2
+      }
+    },
+    {
+      "id": "lapel_mic",
+      "name_th": "ไมค์หนีบปกเสื้อ",
+      "category": "audio",
+      "unit": "ตัว",
+      "price_thb": 600,
+      "tier_min": "standard",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 2
+      }
+    },
+    {
+      "id": "led_screen_or_projector",
+      "name_th": "จอ LED / โปรเจกเตอร์ + จอรับภาพ",
+      "category": "visual",
+      "unit": "ชุด",
+      "price_thb": 8000,
+      "tier_min": "basic",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "per_n_people",
+        "n": 150,
+        "min_qty": 1
+      }
+    },
+    {
+      "id": "stage_light",
+      "name_th": "ไฟส่องเวที",
+      "category": "visual",
+      "unit": "ชุด",
+      "price_thb": 1200,
+      "tier_min": "standard",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "per_component_area",
+        "component": "stage",
+        "sqm_per_unit": 6
+      }
+    },
+    {
+      "id": "moving_head",
+      "name_th": "ไฟมูฟวิ่งเฮด/เอฟเฟกต์",
+      "category": "visual",
+      "unit": "ชุด",
+      "price_thb": 2500,
+      "tier_min": "premium",
+      "requires_components": [
+        "stage"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 4
+      }
+    },
+    {
+      "id": "camera_crew",
+      "name_th": "กล้องบันทึกภาพ/ถ่ายทอดสด",
+      "category": "visual",
+      "unit": "ชุด",
+      "price_thb": 7000,
+      "tier_min": "premium",
+      "requires_components": [
+        "av_booth"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "buffet_counter",
+      "name_th": "เคาน์เตอร์บุฟเฟต์พร้อมอุ่นอาหาร",
+      "category": "food",
+      "unit": "ชุด",
+      "price_thb": 1500,
+      "tier_min": "basic",
+      "requires_components": [
+        "buffet"
+      ],
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "min_qty": 1
+      }
+    },
+    {
+      "id": "water_station",
+      "name_th": "จุดน้ำดื่ม/กาแฟ",
+      "category": "food",
+      "unit": "จุด",
+      "price_thb": 1200,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_n_people",
+        "n": 80,
+        "min_qty": 1
+      }
+    },
+    {
+      "id": "plates_cutlery",
+      "name_th": "ชุดจาน ช้อนส้อม แก้ว (ต่อคน)",
+      "category": "food",
+      "unit": "ชุด",
+      "price_thb": 25,
+      "tier_min": "basic",
+      "requires_components": [
+        "buffet"
+      ],
+      "rule": {
+        "type": "per_n_people",
+        "n": 1,
+        "spare_ratio": 0.1
+      }
+    },
+    {
+      "id": "waste_bins",
+      "name_th": "ถังขยะแยกประเภท",
+      "category": "food",
+      "unit": "ชุด",
+      "price_thb": 150,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "min_qty": 2
+      }
+    },
+    {
+      "id": "reg_desk",
+      "name_th": "โต๊ะลงทะเบียน",
+      "category": "registration",
+      "unit": "ตัว",
+      "price_thb": 300,
+      "tier_min": "basic",
+      "requires_components": [
+        "registration"
+      ],
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "min_qty": 2
+      }
+    },
+    {
+      "id": "name_badges",
+      "name_th": "บัตรชื่อผู้เข้างาน",
+      "category": "registration",
+      "unit": "ใบ",
+      "price_thb": 8,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_n_people",
+        "n": 1,
+        "spare_ratio": 0.1
+      }
+    },
+    {
+      "id": "signage",
+      "name_th": "ป้ายบอกทาง/ป้ายโซน",
+      "category": "registration",
+      "unit": "ป้าย",
+      "price_thb": 400,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_total_area",
+        "sqm_per_unit": 80,
+        "min_qty": 3
+      }
+    },
+    {
+      "id": "extension_power",
+      "name_th": "ปลั๊กพ่วง/ชุดจ่ายไฟ",
+      "category": "power_network",
+      "unit": "ชุด",
+      "price_thb": 150,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_total_area",
+        "sqm_per_unit": 40,
+        "min_qty": 4
+      }
+    },
+    {
+      "id": "wifi_ap",
+      "name_th": "Wi-Fi Access Point",
+      "category": "power_network",
+      "unit": "จุด",
+      "price_thb": 1000,
+      "tier_min": "standard",
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "min_qty": 1
+      }
+    },
+    {
+      "id": "fire_extinguisher",
+      "name_th": "ถังดับเพลิง (สถานที่มักจัดให้)",
+      "category": "safety",
+      "unit": "ถัง",
+      "price_thb": 0,
+      "tier_min": "basic",
+      "rule": {
+        "type": "per_total_area",
+        "sqm_per_unit": 150,
+        "min_qty": 2
+      }
+    },
+    {
+      "id": "first_aid",
+      "name_th": "ชุดปฐมพยาบาล",
+      "category": "safety",
+      "unit": "ชุด",
+      "price_thb": 300,
+      "tier_min": "basic",
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "security_staff",
+      "name_th": "เจ้าหน้าที่รักษาความปลอดภัย",
+      "category": "safety",
+      "unit": "คน",
+      "price_thb": 1000,
+      "tier_min": "standard",
+      "rule": {
+        "type": "per_n_people",
+        "n": 100,
+        "min_qty": 2
+      }
+    },
+    {
+      "id": "photo_backdrop",
+      "name_th": "ฉากถ่ายภาพ + ไฟสตูดิโอ",
+      "category": "decor",
+      "unit": "ชุด",
+      "price_thb": 4000,
+      "tier_min": "standard",
+      "requires_components": [
+        "photo_corner"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 1
+      }
+    },
+    {
+      "id": "exhibition_booth_set",
+      "name_th": "ชุดบูธ (ผนัง+โต๊ะ+ไฟ)",
+      "category": "decor",
+      "unit": "บูธ",
+      "price_thb": 3500,
+      "tier_min": "basic",
+      "requires_components": [
+        "booths"
+      ],
+      "rule": {
+        "type": "per_component_area",
+        "component": "booths",
+        "sqm_per_unit": 9
+      }
+    },
+    {
+      "id": "vip_sofa_set",
+      "name_th": "ชุดโซฟา VIP",
+      "category": "decor",
+      "unit": "ชุด",
+      "price_thb": 3000,
+      "tier_min": "standard",
+      "requires_components": [
+        "lounge"
+      ],
+      "rule": {
+        "type": "fixed",
+        "qty": 2
+      }
+    },
+    {
+      "id": "flower_decor",
+      "name_th": "ดอกไม้/ของตกแต่งโต๊ะ",
+      "category": "decor",
+      "unit": "ชุด",
+      "price_thb": 700,
+      "tier_min": "premium",
+      "requires_layouts": [
+        "banquet",
+        "cabaret"
+      ],
+      "rule": {
+        "type": "per_layout_unit"
+      }
+    },
+    {
+      "id": "dance_floor_panel",
+      "name_th": "พื้นฟลอร์เต้นรำ",
+      "category": "decor",
+      "unit": "ตร.ม.",
+      "price_thb": 200,
+      "tier_min": "standard",
+      "requires_components": [
+        "dance_floor"
+      ],
+      "rule": {
+        "type": "per_component_area",
+        "component": "dance_floor",
+        "sqm_per_unit": 1
+      }
+    }
+  ]
+}

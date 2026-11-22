@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "description": "กฎการคำนวณพื้นที่ส่วนประกอบ (components) และข้อกำหนดทั่วไปของงาน หน่วย ตร.ม. ยกเว้นระบุเป็นอย่างอื่น",
+    "source_note": "ค่าความปลอดภัยเป็นแนวทางวางแผนเบื้องต้น ไม่ใช่ข้อกำหนดทางกฎหมาย: ประตูหนีไฟกว้างสุทธิ >= 90 ซม. สูง >= 1.90 ม. อ้างจากกฎกระทรวงว่าด้วยอาคารสูงและอาคารขนาดใหญ่พิเศษ (ข้อ 27) สำเนาที่ opsmoac.go.th; สัดส่วนห้องน้ำ 1 ที่/40 คน เป็นค่าประมาณของโปรเจกต์ (Purple Guide สำหรับงานกลางแจ้งใช้ 1 หญิง/100 คน และ 1 ชาย/500 คน ซึ่งไม่ใช่เกณฑ์เดียวกัน); ความกว้างทางออก 1 ม./100 คน และเพดาน >= 3 ม. เป็นค่าแนวทาง ยังไม่ได้ตรวจกับตัวบทกฎหมาย ควรตรวจกับข้อกำหนดของสถานที่จริง"
+  },
+  "circulation_ratio": {
+    "tight": 0.15,
+    "standard": 0.2,
+    "comfort": 0.3
+  },
+  "ceiling_height_min_m": 3.0,
+  "exit_width_m_per_100_people": 1.0,
+  "min_exits": 2,
+  "restroom_rule": {
+    "people_per_toilet": 40,
+    "note": "ประมาณการเบื้องต้น 1 ที่ต่อ 40 คน"
+  },
+  "components": [
+    {
+      "id": "stage",
+      "name_th": "เวที",
+      "rule": {
+        "type": "tiered_by_people",
+        "tiers": [
+          {
+            "max_people": 50,
+            "sqm": 12
+          },
+          {
+            "max_people": 150,
+            "sqm": 24
+          },
+          {
+            "max_people": 300,
+            "sqm": 36
+          },
+          {
+            "max_people": 1000000,
+            "sqm": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "buffet",
+      "name_th": "โซนอาหาร/ซุ้มบุฟเฟต์",
+      "rule": {
+        "type": "per_n_people",
+        "n": 50,
+        "sqm_per_unit": 12,
+        "min_units": 1
+      }
+    },
+    {
+      "id": "registration",
+      "name_th": "โต๊ะลงทะเบียน",
+      "rule": {
+        "type": "per_n_people",
+        "n": 100,
+        "sqm_per_unit": 8,
+        "min_units": 1
+      }
+    },
+    {
+      "id": "av_booth",
+      "name_th": "ห้องควบคุมภาพ/เสียง (AV Booth)",
+      "rule": {
+        "type": "fixed",
+        "sqm": 4
+      }
+    },
+    {
+      "id": "photo_corner",
+      "name_th": "มุมถ่ายภาพ",
+      "rule": {
+        "type": "fixed",
+        "sqm": 9
+      }
+    },
+    {
+      "id": "booths",
+      "name_th": "บูธนิทรรศการ",
+      "rule": {
+        "type": "per_n_people",
+        "n": 25,
+        "sqm_per_unit": 9,
+        "min_units": 2
+      }
+    },
+    {
+      "id": "lounge",
+      "name_th": "มุมพักผ่อน/รับรอง VIP",
+      "rule": {
+        "type": "fixed",
+        "sqm": 16
+      }
+    },
+    {
+      "id": "dance_floor",
+      "name_th": "ฟลอร์เต้นรำ",
+      "rule": {
+        "type": "per_n_people",
+        "n": 10,
+        "sqm_per_unit": 6,
+        "min_units": 4
+      }
+    }
+  ]
+}

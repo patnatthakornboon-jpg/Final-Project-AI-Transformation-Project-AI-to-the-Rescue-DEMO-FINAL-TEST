@@ -1,0 +1,2067 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Event &amp; Venue Space Planner</title>
+  <meta name="description" content="บอกโจทย์ของงาน แล้วได้ผังพื้นที่ รายการอุปกรณ์ และงบประมาณโดยประมาณ — IT232 AI Transformation Project">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --paper: #f4f6f8;
+  --sheet: #ffffff;
+  --ink: #172033;
+  --muted: #5a6577;
+  --rule: #c9d1db;
+  --grid: #e1e7ee;
+  --blue: #1f4fd8;
+  --blue-dark: #173ba3;
+  --ok: #17704f;
+  --warn: #b4470a;
+  --warn-bg: #fff3e8;
+  --ok-bg: #e9f6ef;
+  --font: "IBM Plex Sans Thai", "Noto Sans Thai", "Sarabun", "Segoe UI", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #10151f; --sheet: #171e2b; --ink: #e8edf5; --muted: #9aa7ba; --rule: #2c3648;
+    --grid: #1f2837; --blue: #7da2ff; --blue-dark: #a9c1ff; --ok: #5fd0a0; --warn: #ffab70;
+    --warn-bg: #2c1d12; --ok-bg: #11271e;
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font);
+  line-height: 1.6; padding: 0 clamp(16px, 4vw, 48px) 48px; max-width: 1360px; margin-inline: auto;
+}
+h1 { font-size: clamp(1.6rem, 3vw, 2.25rem); line-height: 1.2; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 1.125rem; margin: 0 0 12px; font-weight: 600; }
+.top { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; padding: 32px 0 20px; border-bottom: 2px solid var(--ink); }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+.meta { margin: 0; color: var(--muted); font-size: 0.875rem; text-align: right; }
+
+.layout { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 0; margin-top: 24px; border: 1px solid var(--rule); background: var(--sheet); }
+.controls { padding: 20px; border-right: 1px solid var(--rule); }
+.controls h2:not(:first-child) { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.results { padding: 20px; min-width: 0; }
+
+label, legend { display: block; font-size: 0.9rem; font-weight: 500; margin: 12px 0 4px; padding: 0; }
+.field:first-child label { margin-top: 0; }
+input, select, textarea, button { font: inherit; color: inherit; }
+input[type="text"], input[type="password"], input[type="number"], select, textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper);
+}
+textarea { resize: vertical; min-height: 72px; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.fields { display: grid; gap: 4px; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
+.checks label, .tiers label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; padding: 4px 0; cursor: pointer; }
+.tiers #tier { display: flex; gap: 16px; flex-wrap: wrap; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--blue); width: 1.05rem; height: 1.05rem; }
+
+button { border: 1px solid var(--ink); background: transparent; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+button:hover { background: var(--grid); }
+button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+button.primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+@media (prefers-color-scheme: dark) { button.primary { color: #0b1020; } }
+button:disabled { opacity: 0.6; cursor: progress; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+.row { display: flex; gap: 12px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.examples button { font-size: 0.8rem; padding: 3px 9px; border-color: var(--rule); color: var(--muted); }
+.status { font-size: 0.875rem; color: var(--muted); }
+.notices { margin: 8px 0 0; padding-left: 18px; color: var(--warn); font-size: 0.875rem; }
+.notices:empty { display: none; }
+.ai-box { margin-top: 16px; border: 1px solid var(--rule); border-radius: 4px; padding: 8px 12px; }
+.ai-box summary { cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 8px 0; }
+.ai-test { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.875rem; margin: 8px 0 4px; padding: 8px 10px; border-left: 4px solid var(--ok); background: var(--ok-bg); }
+.ai-test.bad { border-left-color: var(--warn); background: var(--warn-bg); }
+
+.drawing {
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px; border: 1px solid var(--rule); padding: 12px;
+}
+.drawing svg { display: block; max-width: 820px; margin-inline: auto; height: auto; }
+.caption { color: var(--muted); font-size: 0.85rem; margin: 8px 0 0; }
+
+.spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 16px 0 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.spec div { padding: 10px 14px; border-left: 1px solid var(--rule); }
+.spec div:first-child { border-left: 0; padding-left: 0; }
+.spec dt { font-size: 0.85rem; color: var(--muted); }
+.spec dd { margin: 2px 0 0; font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.spec dd small { font-size: 0.85rem; font-weight: 400; color: var(--muted); margin-left: 4px; }
+.budget-note { margin: 12px 0 0; padding: 10px 14px; border-left: 4px solid var(--ok); background: var(--ok-bg); }
+.budget-note.over { border-left-color: var(--warn); background: var(--warn-bg); }
+.error { margin: 0; padding: 12px 14px; border-left: 4px solid var(--warn); background: var(--warn-bg); }
+
+.band { margin-top: 32px; }
+.band.two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.band-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+.band-head h2 { margin: 0; }
+.actions { display: flex; gap: 8px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.95rem; margin-bottom: 8px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); border-bottom: 2px solid var(--ink); font-size: 0.875rem; }
+td.num, th.num { text-align: right; }
+.group table { table-layout: fixed; }
+.group th:nth-child(1) { width: 40%; }
+.group th:nth-child(2) { width: 12%; }
+.group th:nth-child(3) { width: 12%; }
+.group th:nth-child(4) { width: 18%; }
+.group th:nth-child(5) { width: 18%; }
+.band h2:not(:first-child), .band .caption + h2 { margin-top: 28px; }
+td, th { overflow-wrap: anywhere; }
+tr[aria-current="true"] td { background: var(--grid); font-weight: 600; }
+tfoot td { font-weight: 600; border-top: 2px solid var(--ink); border-bottom: 0; }
+.group h3 { font-size: 1rem; margin: 20px 0 4px; display: flex; justify-content: space-between; gap: 12px; }
+.group h3 span { font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+.safety { color: var(--muted); font-size: 0.9rem; }
+.advice { padding-left: 18px; margin: 0 0 8px; }
+.advice li { margin-bottom: 8px; max-width: 70ch; }
+
+.flow ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; counter-reset: step; border-top: 2px solid var(--ink); }
+.flow li { counter-increment: step; padding: 12px 16px 12px 0; margin-right: 16px; border-right: 1px solid var(--rule); font-size: 0.95rem; }
+.flow li:last-child { border-right: 0; margin-right: 0; }
+.flow li::before { content: counter(step); display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
+.flow strong { display: block; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; background: var(--grid); padding: 0 4px; border-radius: 3px; }
+.foot { margin-top: 32px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--rule); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+[hidden] { display: none !important; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .controls { border-right: 0; border-bottom: 1px solid var(--rule); }
+  .band.two { grid-template-columns: 1fr; gap: 24px; }
+  .flow ol { grid-template-columns: 1fr 1fr; }
+  .flow li:nth-child(2) { border-right: 0; margin-right: 0; }
+  .meta { text-align: left; }
+  .checks { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) { .flow ol { grid-template-columns: 1fr; } .flow li { border-right: 0; margin-right: 0; } }
+
+@media print {
+  body { background: #fff; color: #000; padding: 0; }
+  .controls, .actions, .examples, .flow, .foot, #btn-advice, .meta { display: none !important; }
+  .layout { display: block; border: 0; }
+  .band.two { display: block; }
+  .drawing { background-image: none; }
+}
+
+</style>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>AI Event &amp; Venue Space Planner</h1>
+      <p class="lead">บอกโจทย์ของงาน แล้วได้ผังพื้นที่ รายการอุปกรณ์ และงบประมาณโดยประมาณทันที</p>
+    </div>
+    <p class="meta">IT232 Artificial Intelligence for Information Technology<br>AI Transformation Project: AI to the Rescue</p>
+  </header>
+
+  <noscript><p class="error">หน้านี้ต้องเปิดใช้ JavaScript เพื่อคำนวณแผน</p></noscript>
+
+  <main class="layout">
+    <section class="controls" aria-labelledby="h-input">
+      <h2 id="h-input">โจทย์ของงาน</h2>
+
+      <label for="intake">เล่าให้ฟังด้วยภาษาของคุณ</label>
+      <textarea id="intake" rows="3">งานสัมมนา 100 คน มีเวทีและซุ้มอาหาร งบ 5 หมื่นบาท</textarea>
+      <div class="examples" id="examples" aria-label="ตัวอย่างโจทย์"></div>
+      <div class="row">
+        <button type="button" id="btn-read" class="primary">อ่านโจทย์แล้วกรอกฟอร์ม</button>
+        <span id="intake-status" class="status" role="status" aria-live="polite"></span>
+      </div>
+      <ul id="intake-notices" class="notices"></ul>
+
+      <details class="ai-box">
+        <summary>ใช้ AI (Gemini) อ่านโจทย์และเขียนคำแนะนำ — ไม่บังคับ</summary>
+        <p class="hint">ไม่ใส่ key ก็ใช้งานได้ครบด้วยกฎที่เตรียมไว้ Key จะถูกใช้ส่งตรงจากเบราว์เซอร์ของคุณไปยัง Google เท่านั้น ไม่ถูกบันทึกและไม่ผ่านเซิร์ฟเวอร์ใด ๆ ของโปรเจกต์นี้ (ปิดหน้าแล้วหายไป)</p>
+        <label for="ai-key">Gemini API key</label>
+        <input id="ai-key" type="password" autocomplete="off" spellcheck="false">
+        <label for="ai-model">ชื่อโมเดล</label>
+        <input id="ai-model" type="text" value="" placeholder="เว้นว่าง = เลือกโมเดลที่ตอบได้ให้อัตโนมัติ" spellcheck="false">
+        <div class="row"><button type="button" id="btn-test">ทดสอบการเชื่อมต่อ AI</button></div>
+        <pre id="ai-test" class="ai-test" role="status" aria-live="polite" hidden></pre>
+      </details>
+
+      <h2 id="h-form">รายละเอียดงาน</h2>
+      <form id="form" class="fields" onsubmit="return false">
+        <div class="field"><label for="ev">ประเภทงาน</label><select id="ev"></select></div>
+        <div class="field"><label for="people">จำนวนผู้เข้าร่วม (คน)</label><input id="people" type="number" step="10" inputmode="numeric"></div>
+        <fieldset class="field tiers"><legend>ระดับงบ</legend><div id="tier"></div></fieldset>
+        <div class="field"><label for="layout">รูปแบบการจัดที่นั่ง</label><select id="layout"></select></div>
+        <fieldset class="field"><legend>ส่วนประกอบของงาน</legend><div id="comps" class="checks"></div></fieldset>
+        <div class="field"><label for="budget">งบประมาณ (บาท) — เว้นว่างถ้ายังไม่กำหนด</label><input id="budget" type="number" min="0" step="5000" inputmode="numeric"></div>
+      </form>
+    </section>
+
+    <section class="results" aria-labelledby="h-plan" aria-live="polite">
+      <h2 id="h-plan" class="sr-only">ผลการวางแผน</h2>
+      <p id="error" class="error" role="alert" hidden></p>
+      <div id="out">
+        <div class="drawing">
+          <div id="plan-svg"></div>
+          <p class="caption">ผัง schematic ขนาดสัดส่วนตามพื้นที่ที่คำนวณ ไม่ใช่แบบก่อสร้าง ใช้ประกอบการเลือกสถานที่</p>
+        </div>
+
+        <dl id="kpis" class="spec"></dl>
+        <p id="budget-note" class="budget-note" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="out2">
+    <section class="band two">
+      <div>
+        <h2>เทียบระดับงบ</h2>
+        <table id="tiers-table"></table>
+        <p class="caption">ระดับสูงขึ้น = พื้นที่ต่อคนโปร่งขึ้น และมีอุปกรณ์เพิ่ม เช่น ไฟเวที ถ่ายทอดสด ดอกไม้</p>
+        <h2>โซนและความปลอดภัย</h2>
+        <table id="zones-table"></table>
+        <p id="safety" class="safety"></p>
+      </div>
+      <div>
+        <h2>คำแนะนำ</h2>
+        <ul id="advice" class="advice"></ul>
+        <p id="advice-src" class="caption"></p>
+        <button type="button" id="btn-advice" class="primary" hidden>ให้ AI เขียนคำแนะนำสำหรับแผนนี้</button>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="band-head">
+        <h2>รายการอุปกรณ์ที่ต้องจัดเตรียม</h2>
+        <div class="actions">
+          <button type="button" id="btn-csv">ดาวน์โหลด CSV</button>
+          <button type="button" id="btn-print">พิมพ์ Checklist</button>
+        </div>
+      </div>
+      <div id="checklist"></div>
+    </section>
+  </div>
+
+  <section class="band flow">
+    <h2>ระบบทำงานอย่างไร</h2>
+    <ol>
+      <li><strong>อ่านโจทย์</strong> AI (หรือกฎ rule-based) แปลงข้อความเป็นประเภทงาน จำนวนคน ส่วนประกอบ และงบ</li>
+      <li><strong>คำนวณ</strong> rule engine ใช้ข้อมูลในโฟลเดอร์ <code>data/</code> คำนวณพื้นที่ จำนวนอุปกรณ์ และราคา ไม่ให้ AI เดาตัวเลข</li>
+      <li><strong>แสดงผล</strong> ได้ผังพื้นที่ ตารางเทียบระดับงบ และ Checklist ที่ดาวน์โหลดได้</li>
+      <li><strong>อธิบาย</strong> AI เขียนคำแนะนำจากตัวเลขที่คำนวณแล้วเท่านั้น</li>
+    </ol>
+  </section>
+
+  <footer class="foot">
+    <p>ราคาอุปกรณ์เป็นค่าประมาณเพื่อการวางแผน และพื้นที่ต่อคนเป็นค่ามาตรฐานทั่วไป ควรตรวจกับผู้ให้บริการและข้อกำหนดของสถานที่จริงก่อนตัดสินใจ</p>
+  </footer>
+
+  <script>
+// สร้างอัตโนมัติจาก data/*.json ด้วย tools/build_web_data.py — อย่าแก้ไฟล์นี้ด้วยมือ
+globalThis.PLANNER_DATA = {
+ "equipment": {
+  "_meta": {
+   "description": "แคตตาล็อกอุปกรณ์พร้อมกฎการคำนวณจำนวน และราคาประมาณต่อวันงาน (บาท)",
+   "price_note": "ราคาทุกรายการเป็นค่าประมาณเพื่อการวางแผน ยังไม่ได้มาจากใบเสนอราคาจริง (ร้านเช่าในไทยส่วนใหญ่ไม่เผยแพร่ราคา ให้ 'ขอใบเสนอราคา'). จุดอ้างอิงที่ตรวจได้: ชุดบูธ 3 ตร.ม. พร้อมโต๊ะและปลั๊ก 2,000 บาท และปลั๊กเพิ่ม 300 บาท [จุฬาฯ, ไม่ระบุปี]; ราคากลางภาครัฐ (19 ต.ค. 2566) อาหารบุฟเฟต์เอกชน 500 บาท/คน/มื้อ อาหารว่าง 50 บาท/คน/มื้อ สถานที่พร้อมอุปกรณ์ 5,000-15,000 บาท/วัน/รอบ [ONEP]. ควรเก็บใบเสนอราคาอย่างน้อย 3 ราย แล้วปรับราคาในไฟล์นี้ รายละเอียดใน docs/DATA_SOURCES.md",
+   "rule_types": [
+    "fixed",
+    "per_n_people",
+    "per_layout_unit",
+    "per_total_area",
+    "per_component_area"
+   ]
+  },
+  "categories": [
+   {
+    "id": "seating",
+    "name_th": "เก้าอี้และโต๊ะ"
+   },
+   {
+    "id": "stage",
+    "name_th": "เวทีและฉาก"
+   },
+   {
+    "id": "audio",
+    "name_th": "ระบบเสียง"
+   },
+   {
+    "id": "visual",
+    "name_th": "ภาพและแสง"
+   },
+   {
+    "id": "food",
+    "name_th": "อาหารและเครื่องดื่ม"
+   },
+   {
+    "id": "registration",
+    "name_th": "ลงทะเบียนและป้าย"
+   },
+   {
+    "id": "power_network",
+    "name_th": "ไฟฟ้าและเครือข่าย"
+   },
+   {
+    "id": "safety",
+    "name_th": "ความปลอดภัย"
+   },
+   {
+    "id": "decor",
+    "name_th": "ตกแต่ง"
+   }
+  ],
+  "items": [
+   {
+    "category": "seating",
+    "id": "chair",
+    "name_th": "เก้าอี้",
+    "price_thb": 15,
+    "requires_layouts": [
+     "theater",
+     "classroom",
+     "banquet",
+     "cabaret",
+     "u_shape"
+    ],
+    "rule": {
+     "n": 1,
+     "spare_ratio": 0.05,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "seating",
+    "id": "round_table",
+    "name_th": "โต๊ะกลม (พร้อมผ้าคลุม)",
+    "price_thb": 250,
+    "requires_layouts": [
+     "banquet",
+     "cabaret"
+    ],
+    "rule": {
+     "type": "per_layout_unit"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "seating",
+    "id": "long_table",
+    "name_th": "โต๊ะยาว 1.8 ม.",
+    "price_thb": 120,
+    "requires_layouts": [
+     "classroom",
+     "u_shape"
+    ],
+    "rule": {
+     "type": "per_layout_unit"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "seating",
+    "id": "cocktail_table",
+    "name_th": "โต๊ะค็อกเทลสูง",
+    "price_thb": 200,
+    "requires_layouts": [
+     "cocktail"
+    ],
+    "rule": {
+     "type": "per_layout_unit"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "stage",
+    "id": "stage_platform",
+    "name_th": "แท่นเวที (ตาราง ม. ของพื้นเวที)",
+    "price_thb": 180,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "component": "stage",
+     "sqm_per_unit": 1,
+     "type": "per_component_area"
+    },
+    "tier_min": "basic",
+    "unit": "ตร.ม."
+   },
+   {
+    "category": "stage",
+    "id": "backdrop",
+    "name_th": "ฉากหลังเวที (Backdrop)",
+    "price_thb": 6000,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "stage",
+    "id": "podium",
+    "name_th": "โพเดียมพูด",
+    "price_thb": 800,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "stage",
+    "id": "stage_skirt_carpet",
+    "name_th": "พรมปูเวที/ผ้าคลุมขอบเวที",
+    "price_thb": 2500,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "standard",
+    "unit": "ชุด"
+   },
+   {
+    "category": "audio",
+    "id": "speaker_pa",
+    "name_th": "ลำโพง PA",
+    "price_thb": 1500,
+    "rule": {
+     "min_qty": 2,
+     "n": 60,
+     "round_even": true,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "audio",
+    "id": "mixer",
+    "name_th": "มิกเซอร์เสียง",
+    "price_thb": 2000,
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "basic",
+    "unit": "เครื่อง"
+   },
+   {
+    "category": "audio",
+    "id": "wireless_mic",
+    "name_th": "ไมค์ไร้สาย",
+    "price_thb": 500,
+    "rule": {
+     "min_qty": 2,
+     "n": 50,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "audio",
+    "id": "lapel_mic",
+    "name_th": "ไมค์หนีบปกเสื้อ",
+    "price_thb": 600,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "qty": 2,
+     "type": "fixed"
+    },
+    "tier_min": "standard",
+    "unit": "ตัว"
+   },
+   {
+    "category": "visual",
+    "id": "led_screen_or_projector",
+    "name_th": "จอ LED / โปรเจกเตอร์ + จอรับภาพ",
+    "price_thb": 8000,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "min_qty": 1,
+     "n": 150,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "visual",
+    "id": "stage_light",
+    "name_th": "ไฟส่องเวที",
+    "price_thb": 1200,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "component": "stage",
+     "sqm_per_unit": 6,
+     "type": "per_component_area"
+    },
+    "tier_min": "standard",
+    "unit": "ชุด"
+   },
+   {
+    "category": "visual",
+    "id": "moving_head",
+    "name_th": "ไฟมูฟวิ่งเฮด/เอฟเฟกต์",
+    "price_thb": 2500,
+    "requires_components": [
+     "stage"
+    ],
+    "rule": {
+     "qty": 4,
+     "type": "fixed"
+    },
+    "tier_min": "premium",
+    "unit": "ชุด"
+   },
+   {
+    "category": "visual",
+    "id": "camera_crew",
+    "name_th": "กล้องบันทึกภาพ/ถ่ายทอดสด",
+    "price_thb": 7000,
+    "requires_components": [
+     "av_booth"
+    ],
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "premium",
+    "unit": "ชุด"
+   },
+   {
+    "category": "food",
+    "id": "buffet_counter",
+    "name_th": "เคาน์เตอร์บุฟเฟต์พร้อมอุ่นอาหาร",
+    "price_thb": 1500,
+    "requires_components": [
+     "buffet"
+    ],
+    "rule": {
+     "min_qty": 1,
+     "n": 50,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "food",
+    "id": "water_station",
+    "name_th": "จุดน้ำดื่ม/กาแฟ",
+    "price_thb": 1200,
+    "rule": {
+     "min_qty": 1,
+     "n": 80,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "จุด"
+   },
+   {
+    "category": "food",
+    "id": "plates_cutlery",
+    "name_th": "ชุดจาน ช้อนส้อม แก้ว (ต่อคน)",
+    "price_thb": 25,
+    "requires_components": [
+     "buffet"
+    ],
+    "rule": {
+     "n": 1,
+     "spare_ratio": 0.1,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "food",
+    "id": "waste_bins",
+    "name_th": "ถังขยะแยกประเภท",
+    "price_thb": 150,
+    "rule": {
+     "min_qty": 2,
+     "n": 50,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "registration",
+    "id": "reg_desk",
+    "name_th": "โต๊ะลงทะเบียน",
+    "price_thb": 300,
+    "requires_components": [
+     "registration"
+    ],
+    "rule": {
+     "min_qty": 2,
+     "n": 50,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ตัว"
+   },
+   {
+    "category": "registration",
+    "id": "name_badges",
+    "name_th": "บัตรชื่อผู้เข้างาน",
+    "price_thb": 8,
+    "rule": {
+     "n": 1,
+     "spare_ratio": 0.1,
+     "type": "per_n_people"
+    },
+    "tier_min": "basic",
+    "unit": "ใบ"
+   },
+   {
+    "category": "registration",
+    "id": "signage",
+    "name_th": "ป้ายบอกทาง/ป้ายโซน",
+    "price_thb": 400,
+    "rule": {
+     "min_qty": 3,
+     "sqm_per_unit": 80,
+     "type": "per_total_area"
+    },
+    "tier_min": "basic",
+    "unit": "ป้าย"
+   },
+   {
+    "category": "power_network",
+    "id": "extension_power",
+    "name_th": "ปลั๊กพ่วง/ชุดจ่ายไฟ",
+    "price_thb": 150,
+    "rule": {
+     "min_qty": 4,
+     "sqm_per_unit": 40,
+     "type": "per_total_area"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "power_network",
+    "id": "wifi_ap",
+    "name_th": "Wi-Fi Access Point",
+    "price_thb": 1000,
+    "rule": {
+     "min_qty": 1,
+     "n": 50,
+     "type": "per_n_people"
+    },
+    "tier_min": "standard",
+    "unit": "จุด"
+   },
+   {
+    "category": "safety",
+    "id": "fire_extinguisher",
+    "name_th": "ถังดับเพลิง (สถานที่มักจัดให้)",
+    "price_thb": 0,
+    "rule": {
+     "min_qty": 2,
+     "sqm_per_unit": 150,
+     "type": "per_total_area"
+    },
+    "tier_min": "basic",
+    "unit": "ถัง"
+   },
+   {
+    "category": "safety",
+    "id": "first_aid",
+    "name_th": "ชุดปฐมพยาบาล",
+    "price_thb": 300,
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "basic",
+    "unit": "ชุด"
+   },
+   {
+    "category": "safety",
+    "id": "security_staff",
+    "name_th": "เจ้าหน้าที่รักษาความปลอดภัย",
+    "price_thb": 1000,
+    "rule": {
+     "min_qty": 2,
+     "n": 100,
+     "type": "per_n_people"
+    },
+    "tier_min": "standard",
+    "unit": "คน"
+   },
+   {
+    "category": "decor",
+    "id": "photo_backdrop",
+    "name_th": "ฉากถ่ายภาพ + ไฟสตูดิโอ",
+    "price_thb": 4000,
+    "requires_components": [
+     "photo_corner"
+    ],
+    "rule": {
+     "qty": 1,
+     "type": "fixed"
+    },
+    "tier_min": "standard",
+    "unit": "ชุด"
+   },
+   {
+    "category": "decor",
+    "id": "exhibition_booth_set",
+    "name_th": "ชุดบูธ (ผนัง+โต๊ะ+ไฟ)",
+    "price_thb": 3500,
+    "requires_components": [
+     "booths"
+    ],
+    "rule": {
+     "component": "booths",
+     "sqm_per_unit": 9,
+     "type": "per_component_area"
+    },
+    "tier_min": "basic",
+    "unit": "บูธ"
+   },
+   {
+    "category": "decor",
+    "id": "vip_sofa_set",
+    "name_th": "ชุดโซฟา VIP",
+    "price_thb": 3000,
+    "requires_components": [
+     "lounge"
+    ],
+    "rule": {
+     "qty": 2,
+     "type": "fixed"
+    },
+    "tier_min": "standard",
+    "unit": "ชุด"
+   },
+   {
+    "category": "decor",
+    "id": "flower_decor",
+    "name_th": "ดอกไม้/ของตกแต่งโต๊ะ",
+    "price_thb": 700,
+    "requires_layouts": [
+     "banquet",
+     "cabaret"
+    ],
+    "rule": {
+     "type": "per_layout_unit"
+    },
+    "tier_min": "premium",
+    "unit": "ชุด"
+   },
+   {
+    "category": "decor",
+    "id": "dance_floor_panel",
+    "name_th": "พื้นฟลอร์เต้นรำ",
+    "price_thb": 200,
+    "requires_components": [
+     "dance_floor"
+    ],
+    "rule": {
+     "component": "dance_floor",
+     "sqm_per_unit": 1,
+     "type": "per_component_area"
+    },
+    "tier_min": "standard",
+    "unit": "ตร.ม."
+   }
+  ]
+ },
+ "event_types": {
+  "_meta": {
+   "description": "Preset ของประเภทงาน: layout เริ่มต้น และส่วนประกอบ (components) ที่งานนั้นมักต้องใช้"
+  },
+  "budget_tiers": [
+   {
+    "id": "basic",
+    "layout_density": "tight",
+    "name_th": "ประหยัด",
+    "rank": 1
+   },
+   {
+    "id": "standard",
+    "layout_density": "standard",
+    "name_th": "มาตรฐาน",
+    "rank": 2
+   },
+   {
+    "id": "premium",
+    "layout_density": "comfort",
+    "name_th": "พรีเมียม",
+    "rank": 3
+   }
+  ],
+  "event_types": [
+   {
+    "allowed_layouts": [
+     "theater",
+     "classroom",
+     "cabaret"
+    ],
+    "default_components": [
+     "stage",
+     "registration",
+     "av_booth",
+     "buffet"
+    ],
+    "default_layout": "theater",
+    "id": "seminar",
+    "max_people": 1000,
+    "min_people": 10,
+    "name_th": "งานสัมมนา",
+    "optional_components": [
+     "photo_corner",
+     "lounge",
+     "booths"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "theater",
+     "classroom",
+     "cabaret"
+    ],
+    "default_components": [
+     "stage",
+     "registration",
+     "av_booth",
+     "buffet",
+     "booths"
+    ],
+    "default_layout": "theater",
+    "id": "conference",
+    "max_people": 2000,
+    "min_people": 30,
+    "name_th": "งานประชุมวิชาการ/คอนเฟอเรนซ์",
+    "optional_components": [
+     "photo_corner",
+     "lounge"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "classroom",
+     "cabaret",
+     "u_shape"
+    ],
+    "default_components": [
+     "stage",
+     "registration"
+    ],
+    "default_layout": "classroom",
+    "id": "workshop",
+    "max_people": 200,
+    "min_people": 10,
+    "name_th": "เวิร์กชอป/อบรม",
+    "optional_components": [
+     "buffet",
+     "av_booth"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "banquet",
+     "cabaret"
+    ],
+    "default_components": [
+     "stage",
+     "registration",
+     "buffet",
+     "photo_corner",
+     "dance_floor"
+    ],
+    "default_layout": "banquet",
+    "id": "wedding_banquet",
+    "max_people": 1000,
+    "min_people": 30,
+    "name_th": "งานแต่งงาน/เลี้ยงโต๊ะจีน",
+    "optional_components": [
+     "av_booth",
+     "lounge"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "theater",
+     "cocktail"
+    ],
+    "default_components": [
+     "stage",
+     "registration",
+     "av_booth",
+     "photo_corner"
+    ],
+    "default_layout": "theater",
+    "id": "product_launch",
+    "max_people": 800,
+    "min_people": 30,
+    "name_th": "งานเปิดตัวสินค้า",
+    "optional_components": [
+     "buffet",
+     "lounge",
+     "booths"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "cocktail",
+     "cabaret"
+    ],
+    "default_components": [
+     "registration",
+     "buffet",
+     "photo_corner"
+    ],
+    "default_layout": "cocktail",
+    "id": "networking",
+    "max_people": 800,
+    "min_people": 20,
+    "name_th": "งานเน็ตเวิร์กกิ้ง/สังสรรค์",
+    "optional_components": [
+     "stage",
+     "av_booth",
+     "lounge"
+    ]
+   },
+   {
+    "allowed_layouts": [
+     "cocktail"
+    ],
+    "default_components": [
+     "registration",
+     "booths",
+     "stage"
+    ],
+    "default_layout": "cocktail",
+    "id": "exhibition",
+    "max_people": 3000,
+    "min_people": 30,
+    "name_th": "งานนิทรรศการ",
+    "optional_components": [
+     "buffet",
+     "photo_corner",
+     "lounge",
+     "av_booth"
+    ]
+   }
+  ]
+ },
+ "layouts": {
+  "_meta": {
+   "description": "รูปแบบการจัดที่นั่ง (layout) พร้อมพื้นที่ต่อคน หน่วย ตร.ม.",
+   "source_note": "ค่าพื้นที่ต่อคนเป็นค่าประมาณเพื่อวางแผน เทียบกับแหล่งอ้างอิงภายนอกแล้ว (แปลง 1 sq ft = 0.0929 ตร.ม.): เธียเตอร์ 6-8 sq ft [Social Tables], 9-13 sq ft [Meetings & Conventions], 9 sq ft [Cvent] = 0.56-1.21 ตร.ม.; ห้องเรียน 14-18 sq ft [Social Tables], 14.5-24 sq ft [M&C] = 1.3-2.2 ตร.ม.; โต๊ะกลม 11-12 sq ft [Social Tables], 9-18 sq ft [M&C], ~16-19 sq ft คำนวณจากตารางความจุห้อง [UVic] = 0.84-1.8 ตร.ม.; ค็อกเทล/รับรอง 7-15 sq ft [M&C], 8 sq ft [Social Tables] = 0.65-1.4 ตร.ม.; รูปตัวยู 37.5-45 sq ft [M&C] = 3.5-4.2 ตร.ม. (ปรับค่าเดิม 2.2-3.2 ให้ตรงแหล่ง). ค่าแบบ cabaret ไม่พบในแหล่งที่ตรวจ จึงยังเป็นค่าประมาณ. รายละเอียดและลิงก์ใน docs/DATA_SOURCES.md"
+  },
+  "layouts": [
+   {
+    "best_for": [
+     "seminar",
+     "conference",
+     "product_launch"
+    ],
+    "has_tables": false,
+    "id": "theater",
+    "name_en": "Theater",
+    "name_th": "เธียเตอร์ (แถวเก้าอี้หันหน้าเวที)",
+    "seats_per_unit": 1,
+    "sqm_per_person": {
+     "comfort": 1.2,
+     "standard": 1.0,
+     "tight": 0.8
+    },
+    "unit_name": "เก้าอี้"
+   },
+   {
+    "best_for": [
+     "workshop",
+     "seminar"
+    ],
+    "has_tables": true,
+    "id": "classroom",
+    "name_en": "Classroom",
+    "name_th": "ห้องเรียน (โต๊ะยาวหันหน้าเวที)",
+    "seats_per_unit": 2,
+    "sqm_per_person": {
+     "comfort": 2.2,
+     "standard": 1.8,
+     "tight": 1.5
+    },
+    "unit_name": "โต๊ะยาว 1.8 ม."
+   },
+   {
+    "best_for": [
+     "wedding_banquet"
+    ],
+    "has_tables": true,
+    "id": "banquet",
+    "name_en": "Banquet Round",
+    "name_th": "โต๊ะจีน/โต๊ะกลม (10 ที่นั่งต่อโต๊ะ)",
+    "seats_per_unit": 10,
+    "sqm_per_person": {
+     "comfort": 2.0,
+     "standard": 1.7,
+     "tight": 1.4
+    },
+    "unit_name": "โต๊ะกลม"
+   },
+   {
+    "best_for": [
+     "workshop",
+     "seminar",
+     "wedding_banquet"
+    ],
+    "has_tables": true,
+    "id": "cabaret",
+    "name_en": "Cabaret",
+    "name_th": "คาบาเรต์ (โต๊ะกลมนั่งครึ่งวง หันหน้าเวที)",
+    "seats_per_unit": 6,
+    "sqm_per_person": {
+     "comfort": 2.2,
+     "standard": 1.8,
+     "tight": 1.5
+    },
+    "unit_name": "โต๊ะกลม"
+   },
+   {
+    "best_for": [
+     "networking",
+     "exhibition",
+     "product_launch"
+    ],
+    "has_tables": true,
+    "id": "cocktail",
+    "name_en": "Cocktail / Standing",
+    "name_th": "ค็อกเทล (ยืนเดินสังสรรค์)",
+    "seats_per_unit": 8,
+    "sqm_per_person": {
+     "comfort": 1.2,
+     "standard": 0.9,
+     "tight": 0.7
+    },
+    "unit_name": "โต๊ะค็อกเทล"
+   },
+   {
+    "best_for": [
+     "workshop"
+    ],
+    "has_tables": true,
+    "id": "u_shape",
+    "name_en": "U-Shape",
+    "name_th": "ตัวยู (U-Shape)",
+    "seats_per_unit": 2,
+    "sqm_per_person": {
+     "comfort": 4.2,
+     "standard": 3.9,
+     "tight": 3.5
+    },
+    "unit_name": "โต๊ะยาว 1.8 ม."
+   }
+  ]
+ },
+ "prompts": {
+  "_meta": {
+   "description": "Prompt Engineering: prompt ที่ใช้สอน LLM ให้ทำงานเฉพาะทางของระบบนี้ (ใช้ร่วมกันทั้ง Python และ JavaScript)",
+   "design": "LLM ทำหน้าที่ 'อ่านโจทย์' และ 'อธิบายผล' เท่านั้น ส่วนตัวเลขพื้นที่/จำนวนอุปกรณ์/ราคา คำนวณด้วย rule engine เพื่อให้ถูกต้องและตรวจสอบย้อนกลับได้",
+   "placeholders": [
+    "{EVENT_TYPES}",
+    "{LAYOUTS}",
+    "{COMPONENTS}"
+   ]
+  },
+  "advise_system": "คุณเป็นที่ปรึกษาการจัดอีเวนต์ ตอบเป็นภาษาไทย 4-6 ข้อสั้น ๆ (ขึ้นต้นแต่ละข้อด้วย '- ') จากข้อมูลแผนในรูป JSON ที่ให้เท่านั้น กฎ: (1) ห้ามแต่งตัวเลข พื้นที่ จำนวน หรือราคาใหม่ ใช้เฉพาะตัวเลขที่อยู่ใน JSON (2) บอกว่าแผนนี้เหมาะกับงานอย่างไร (3) ชี้ความเสี่ยงสำคัญ 1-2 ข้อ เช่น ทางออก ห้องน้ำ คิวอาหาร หรืองบที่ตึงเกินไป (4) เสนอทางเลือกประหยัดงบหรือเพิ่มความสะดวก 1-2 ข้อ โดยอ้างอิงตัวเลือกระดับงบ (tier_options) ที่ให้ (5) ไม่ต้องทักทายหรือสรุปซ้ำ",
+  "extract_examples": [
+   {
+    "input": "งานสัมมนา 100 คน มีเวทีและซุ้มอาหาร งบ 5 หมื่นบาท",
+    "output": {
+     "budget_thb": 50000,
+     "components": [
+      "stage",
+      "buffet"
+     ],
+     "event_type": "seminar",
+     "layout": null,
+     "people": 100,
+     "tier": null
+    }
+   },
+   {
+    "input": "Wedding dinner for 250 guests, round tables, premium style, with dance floor",
+    "output": {
+     "budget_thb": null,
+     "components": [
+      "dance_floor"
+     ],
+     "event_type": "wedding_banquet",
+     "layout": "banquet",
+     "people": 250,
+     "tier": "premium"
+    }
+   },
+   {
+    "input": "อยากจัดงานเล็ก ๆ",
+    "output": {
+     "budget_thb": null,
+     "components": [],
+     "event_type": null,
+     "layout": null,
+     "people": null,
+     "tier": null
+    }
+   }
+  ],
+  "extract_system": "You are the intake parser of an event & venue space planning tool. Read the user's request (Thai or English) and output ONLY one JSON object with exactly these keys:\n- event_type: one of [{EVENT_TYPES}] or null\n- people: integer number of attendees, or null\n- tier: \"basic\" | \"standard\" | \"premium\" | null (basic = economical/budget-friendly, premium = luxurious)\n- layout: one of [{LAYOUTS}] or null (only when the user clearly states a seating style)\n- components: array of ids from [{COMPONENTS}] that the user explicitly asks for (stage, food/buffet, registration, booths, photo corner, VIP lounge, dance floor, AV control booth)\n- budget_thb: integer amount in Thai baht, or null\nRules: never guess. If a value is not stated, use null (or [] for components). Convert Thai numerals and Thai number words (1 พัน=1000, 1 หมื่น=10000, 1 แสน=100000, 1 ล้าน=1000000). Output JSON only, no explanation, no markdown."
+ },
+ "venue_rules": {
+  "_meta": {
+   "description": "กฎการคำนวณพื้นที่ส่วนประกอบ (components) และข้อกำหนดทั่วไปของงาน หน่วย ตร.ม. ยกเว้นระบุเป็นอย่างอื่น",
+   "source_note": "ค่าความปลอดภัยเป็นแนวทางวางแผนเบื้องต้น ไม่ใช่ข้อกำหนดทางกฎหมาย: ประตูหนีไฟกว้างสุทธิ >= 90 ซม. สูง >= 1.90 ม. อ้างจากกฎกระทรวงว่าด้วยอาคารสูงและอาคารขนาดใหญ่พิเศษ (ข้อ 27) สำเนาที่ opsmoac.go.th; สัดส่วนห้องน้ำ 1 ที่/40 คน เป็นค่าประมาณของโปรเจกต์ (Purple Guide สำหรับงานกลางแจ้งใช้ 1 หญิง/100 คน และ 1 ชาย/500 คน ซึ่งไม่ใช่เกณฑ์เดียวกัน); ความกว้างทางออก 1 ม./100 คน และเพดาน >= 3 ม. เป็นค่าแนวทาง ยังไม่ได้ตรวจกับตัวบทกฎหมาย ควรตรวจกับข้อกำหนดของสถานที่จริง"
+  },
+  "ceiling_height_min_m": 3.0,
+  "circulation_ratio": {
+   "comfort": 0.3,
+   "standard": 0.2,
+   "tight": 0.15
+  },
+  "components": [
+   {
+    "id": "stage",
+    "name_th": "เวที",
+    "rule": {
+     "tiers": [
+      {
+       "max_people": 50,
+       "sqm": 12
+      },
+      {
+       "max_people": 150,
+       "sqm": 24
+      },
+      {
+       "max_people": 300,
+       "sqm": 36
+      },
+      {
+       "max_people": 1000000,
+       "sqm": 60
+      }
+     ],
+     "type": "tiered_by_people"
+    }
+   },
+   {
+    "id": "buffet",
+    "name_th": "โซนอาหาร/ซุ้มบุฟเฟต์",
+    "rule": {
+     "min_units": 1,
+     "n": 50,
+     "sqm_per_unit": 12,
+     "type": "per_n_people"
+    }
+   },
+   {
+    "id": "registration",
+    "name_th": "โต๊ะลงทะเบียน",
+    "rule": {
+     "min_units": 1,
+     "n": 100,
+     "sqm_per_unit": 8,
+     "type": "per_n_people"
+    }
+   },
+   {
+    "id": "av_booth",
+    "name_th": "ห้องควบคุมภาพ/เสียง (AV Booth)",
+    "rule": {
+     "sqm": 4,
+     "type": "fixed"
+    }
+   },
+   {
+    "id": "photo_corner",
+    "name_th": "มุมถ่ายภาพ",
+    "rule": {
+     "sqm": 9,
+     "type": "fixed"
+    }
+   },
+   {
+    "id": "booths",
+    "name_th": "บูธนิทรรศการ",
+    "rule": {
+     "min_units": 2,
+     "n": 25,
+     "sqm_per_unit": 9,
+     "type": "per_n_people"
+    }
+   },
+   {
+    "id": "lounge",
+    "name_th": "มุมพักผ่อน/รับรอง VIP",
+    "rule": {
+     "sqm": 16,
+     "type": "fixed"
+    }
+   },
+   {
+    "id": "dance_floor",
+    "name_th": "ฟลอร์เต้นรำ",
+    "rule": {
+     "min_units": 4,
+     "n": 10,
+     "sqm_per_unit": 6,
+     "type": "per_n_people"
+    }
+   }
+  ],
+  "exit_width_m_per_100_people": 1.0,
+  "min_exits": 2,
+  "restroom_rule": {
+   "note": "ประมาณการเบื้องต้น 1 ที่ต่อ 40 คน",
+   "people_per_toilet": 40
+  }
+ }
+};
+
+</script>
+  <script>
+/* Rule engine + parser + floorplan + AI layer (JavaScript) — คู่ขนานกับแพ็กเกจ Python ใน planner/
+ * ใช้ได้ทั้งในเบราว์เซอร์ (GitHub Pages) และ Node (tests/compare_js.js)
+ * แก้ตรรกะที่นี่ ต้องแก้ใน planner/*.py ด้วย แล้วรัน: python tests/compare_js.py
+ */
+(function (root) {
+  'use strict';
+
+  const TIER_ORDER = ['basic', 'standard', 'premium'];
+  const TIER_RANK = { basic: 1, standard: 2, premium: 3 };
+  const ceil = (x) => Math.ceil(Math.round(x * 1e6) / 1e6); // กัน 100*1.05 = 105.00000000000001
+  const r1 = (x) => Math.round((x + 1e-9) * 10) / 10;
+  const g = (x) => String(Number(x.toPrecision(6)));
+  const fmt = (x) => Math.round(x).toLocaleString('en-US');
+
+  // ---------- data ----------
+  let _data = null;
+  function prepare(raw) {
+    const by = (arr) => Object.fromEntries(arr.map((x) => [x.id, x]));
+    return {
+      layouts: by(raw.layouts.layouts),
+      rules: raw.venue_rules,
+      components: by(raw.venue_rules.components),
+      categories: Object.fromEntries(raw.equipment.categories.map((c) => [c.id, c.name_th])),
+      categoryOrder: raw.equipment.categories.map((c) => c.id),
+      items: raw.equipment.items,
+      events: by(raw.event_types.event_types),
+      tiers: by(raw.event_types.budget_tiers),
+      prompts: raw.prompts,
+    };
+  }
+  function getData() {
+    if (!_data) _data = prepare(root.PLANNER_DATA);
+    return _data;
+  }
+
+  // ---------- engine ----------
+  function componentArea(rule, people) {
+    if (rule.type === 'fixed') return rule.sqm;
+    if (rule.type === 'per_n_people') {
+      return Math.max(rule.min_units, ceil(people / rule.n)) * rule.sqm_per_unit;
+    }
+    for (const t of rule.tiers) if (people <= t.max_people) return t.sqm;
+    throw new Error('tiered rule ไม่ครอบคลุมจำนวนคนนี้');
+  }
+
+  function itemQty(item, people, layout, total, compAreas) {
+    const r = item.rule;
+    switch (r.type) {
+      case 'fixed': return r.qty;
+      case 'per_n_people': {
+        let q = Math.max(r.min_qty || 1, ceil((people / r.n) * (1 + (r.spare_ratio || 0))));
+        if (r.round_even && q % 2) q += 1;
+        return q;
+      }
+      case 'per_layout_unit': return ceil(people / layout.seats_per_unit);
+      case 'per_total_area': return Math.max(r.min_qty || 1, ceil(total / r.sqm_per_unit));
+      case 'per_component_area': return Math.max(1, ceil(compAreas[r.component] / r.sqm_per_unit));
+      default: throw new Error('rule type ไม่รู้จัก: ' + r.type);
+    }
+  }
+
+  function calc(d, people, tier, layoutId, compIds) {
+    const layout = d.layouts[layoutId];
+    const dens = d.tiers[tier].layout_density;
+    const seating = people * layout.sqm_per_person[dens];
+    const compAreas = {};
+    compIds.forEach((c) => { compAreas[c] = componentArea(d.components[c].rule, people); });
+    const subtotal = seating + Object.values(compAreas).reduce((a, b) => a + b, 0);
+    const circRatio = d.rules.circulation_ratio[dens];
+    const circulation = subtotal * circRatio;
+    const total = subtotal + circulation;
+    const equipment = [];
+    let cost = 0;
+    for (const it of d.items) {
+      if (TIER_RANK[it.tier_min] > TIER_RANK[tier]) continue;
+      if (it.requires_layouts && !it.requires_layouts.includes(layoutId)) continue;
+      if ((it.requires_components || []).some((c) => !(c in compAreas))) continue;
+      const qty = itemQty(it, people, layout, total, compAreas);
+      const line = qty * it.price_thb;
+      cost += line;
+      equipment.push({
+        id: it.id, name_th: it.name_th, category: it.category, category_th: d.categories[it.category],
+        qty, unit: it.unit, unit_price: it.price_thb, total_price: line,
+      });
+    }
+    return { layout, dens, seating, compAreas, subtotal, circRatio, circulation, total, equipment, cost };
+  }
+
+  function plan(eventType, people, tier, layout, components, budgetThb, data) {
+    const d = data || getData();
+    tier = tier || 'standard';
+    const ev = d.events[eventType];
+    if (!ev) throw new Error(`ไม่รู้จักประเภทงาน '${eventType}'`);
+    if (!Number.isInteger(people)) throw new Error('จำนวนคนต้องเป็นจำนวนเต็ม');
+    if (people < ev.min_people || people > ev.max_people) {
+      throw new Error(`${ev.name_th} รองรับ ${fmt(ev.min_people)}-${fmt(ev.max_people)} คน (ได้ ${fmt(people)})`);
+    }
+    if (!d.tiers[tier]) throw new Error(`ไม่รู้จักระดับงบ '${tier}'`);
+    const layoutId = layout || ev.default_layout;
+    if (!ev.allowed_layouts.includes(layoutId)) {
+      throw new Error(`${ev.name_th} ไม่เหมาะกับ layout '${layoutId}' (ใช้ได้: ${ev.allowed_layouts.join(', ')})`);
+    }
+    const compIds = Array.from(new Set(components == null ? ev.default_components : components));
+    compIds.forEach((c) => { if (!d.components[c]) throw new Error(`ไม่รู้จักส่วนประกอบ '${c}'`); });
+    if (budgetThb != null && !(typeof budgetThb === 'number' && budgetThb > 0)) {
+      throw new Error('งบประมาณต้องเป็นตัวเลขมากกว่า 0');
+    }
+
+    const main = calc(d, people, tier, layoutId, compIds);
+    const rules = d.rules;
+    const tierOptions = TIER_ORDER.map((t) => {
+      const c = t === tier ? main : calc(d, people, t, layoutId, compIds);
+      return {
+        tier: t, name_th: d.tiers[t].name_th, total_area: r1(c.total), total_cost: c.cost,
+        cost_per_person: Math.round(c.cost / people), items: c.equipment.length,
+      };
+    });
+    let budget = null;
+    if (budgetThb != null) {
+      const fits = tierOptions.filter((o) => o.total_cost <= budgetThb).map((o) => o.tier);
+      budget = {
+        budget_thb: budgetThb, within_budget: main.cost <= budgetThb,
+        difference: Math.round(budgetThb - main.cost), affordable_tiers: fits,
+        recommended_tier: fits.length ? fits[fits.length - 1] : null,
+      };
+    }
+    const zones = [{ id: 'seating', name_th: 'โซนที่นั่ง', sqm: r1(main.seating) }];
+    compIds.forEach((c) => zones.push({ id: c, name_th: d.components[c].name_th, sqm: r1(main.compAreas[c]) }));
+    const groups = [];
+    d.categoryOrder.forEach((cat) => {
+      const rows = main.equipment.filter((e) => e.category === cat);
+      if (rows.length) {
+        groups.push({ category: cat, name_th: d.categories[cat], items: rows,
+          subtotal: rows.reduce((a, r) => a + r.total_price, 0) });
+      }
+    });
+    const layoutObj = main.layout;
+    return {
+      inputs: { event_type: eventType, event_name_th: ev.name_th, people, tier,
+        tier_name_th: d.tiers[tier].name_th, layout: layoutId, layout_name_th: layoutObj.name_th,
+        components: compIds, budget_thb: budgetThb == null ? null : budgetThb },
+      area: {
+        sqm_per_person: layoutObj.sqm_per_person[main.dens], seating: r1(main.seating), zones,
+        subtotal: r1(main.subtotal), circulation_ratio: main.circRatio, circulation: r1(main.circulation),
+        total: r1(main.total), recommended_min_venue: ceil(main.total),
+      },
+      equipment: main.equipment, equipment_groups: groups, total_cost: main.cost,
+      cost_per_person: Math.round(main.cost / people), tier_options: tierOptions, budget,
+      safety: {
+        ceiling_height_min_m: rules.ceiling_height_min_m,
+        exits: Math.max(rules.min_exits, ceil(people / 250)),
+        exit_width_total_m: r1((people / 100) * rules.exit_width_m_per_100_people),
+        toilets: ceil(people / rules.restroom_rule.people_per_toilet),
+        seat_units: ceil(people / layoutObj.seats_per_unit), seat_unit_name: layoutObj.unit_name,
+      },
+    };
+  }
+
+  // ---------- parser (rule-based) ----------
+  const EVENT_KW = {
+    wedding_banquet: ['แต่งงาน', 'มงคลสมรส', 'โต๊ะจีน', 'เลี้ยงโต๊ะ', 'งานเลี้ยง', 'wedding', 'banquet', 'gala'],
+    product_launch: ['เปิดตัว', 'launch'],
+    exhibition: ['นิทรรศการ', 'แสดงสินค้า', 'exhibition', 'expo', 'trade show'],
+    networking: ['เน็ตเวิร์ก', 'networking', 'สังสรรค์', 'ปาร์ตี้', 'party', 'mixer'],
+    workshop: ['เวิร์กชอป', 'เวิร์คชอป', 'เวิร์กช็อป', 'เวิร์คช็อป', 'workshop', 'อบรม', 'training'],
+    conference: ['คอนเฟอเรนซ์', 'ประชุมวิชาการ', 'conference', 'convention'],
+    seminar: ['สัมมนา', 'seminar', 'ประชุม', 'meeting'],
+  };
+  const LAYOUT_KW = {
+    theater: ['เธียเตอร์', 'theater', 'theatre', 'แถวเก้าอี้'],
+    classroom: ['ห้องเรียน', 'classroom', 'โต๊ะยาว'],
+    banquet: ['โต๊ะจีน', 'โต๊ะกลม', 'banquet', 'round table'],
+    cabaret: ['คาบาเรต์', 'คาบาเร่ต์', 'cabaret'],
+    cocktail: ['ค็อกเทล', 'cocktail', 'ยืนสังสรรค์', 'standing'],
+    u_shape: ['ตัวยู', 'u-shape', 'u shape', 'ushape'],
+  };
+  const COMPONENT_KW = {
+    stage: ['เวที', 'stage'],
+    buffet: ['บุฟเฟ', 'อาหาร', 'buffet', 'catering', 'เครื่องดื่ม'],
+    registration: ['ลงทะเบียน', 'registration', 'เช็คอิน', 'check-in'],
+    av_booth: ['av booth', 'ห้องควบคุม', 'ควบคุมเสียง', 'ห้องมิกซ์'],
+    photo_corner: ['ถ่ายรูป', 'ถ่ายภาพ', 'photo', 'โฟโต้'],
+    booths: ['บูธ', 'booth'],
+    lounge: ['vip', 'รับรอง', 'เลานจ์', 'lounge'],
+    dance_floor: ['เต้น', 'dance'],
+  };
+  const TIER_KW = {
+    basic: ['ประหยัด', 'basic', 'ราคาถูก', 'cheap'],
+    standard: ['มาตรฐาน', 'standard', 'ปานกลาง'],
+    premium: ['พรีเมียม', 'premium', 'หรูหรา', 'luxury', 'ระดับหรู'],
+  };
+  const MULT = { 'พัน': 1e3, 'หมื่น': 1e4, 'แสน': 1e5, 'ล้าน': 1e6, k: 1e3, m: 1e6 };
+  const NUM = '(\\d[\\d,]*(?:\\.\\d+)?)';
+  const UNIT = '(พัน|หมื่น|แสน|ล้าน|k(?![a-z])|m(?![a-z]))?'; // k/m ต้องไม่ตามด้วยตัวอักษร (กัน "50 more" -> 50 ล้าน)
+  const PEOPLE_RE = new RegExp(NUM + '\\s*(?:คน|ท่าน|ที่นั่ง|people|persons|person|pax|guests|attendees|seats)', 'i');
+  const BUDGET_RES = [
+    new RegExp('(?:งบประมาณ|งบ|budget)[^\\d]{0,12}' + NUM + '\\s*' + UNIT, 'i'),
+    new RegExp(NUM + '\\s*' + UNIT + '\\s*(?:บาท|baht|thb|฿)', 'i'),
+    new RegExp('฿\\s*' + NUM + '\\s*' + UNIT, 'i'),
+  ];
+  const THAI_DIGITS = { '๐': '0', '๑': '1', '๒': '2', '๓': '3', '๔': '4', '๕': '5', '๖': '6', '๗': '7', '๘': '8', '๙': '9' };
+
+  function firstByPosition(text, table) {
+    let best = null;
+    for (const [key, words] of Object.entries(table)) {
+      for (const w of words) {
+        const pos = text.indexOf(w);
+        if (pos < 0) continue;
+        const better = best === null || pos < best.pos ||
+          (pos === best.pos && (-w.length < -best.len || (-w.length === -best.len && key < best.key)));
+        if (better) best = { pos, len: w.length, key };
+      }
+    }
+    return best ? best.key : null;
+  }
+
+  function parseRequest(text) {
+    const t = String(text || '').replace(/[๐-๙]/g, (c) => THAI_DIGITS[c]).toLowerCase();
+    const out = { event_type: null, people: null, tier: null, layout: null, components: [], budget_thb: null };
+    let m = PEOPLE_RE.exec(t);
+    if (m) out.people = Math.trunc(parseFloat(m[1].replace(/,/g, '')));
+    for (const rx of BUDGET_RES) {
+      m = rx.exec(t);
+      if (m) {
+        let v = parseFloat(m[1].replace(/,/g, ''));
+        if (m[2]) v *= MULT[m[2].toLowerCase()];
+        v = Math.round(v);
+        if (v > 0) { out.budget_thb = v; break; }
+      }
+    }
+    out.event_type = firstByPosition(t, EVENT_KW);
+    out.layout = firstByPosition(t, LAYOUT_KW);
+    out.tier = firstByPosition(t, TIER_KW);
+    const tComp = t.split('av booth').join(' ');
+    for (const [cid, words] of Object.entries(COMPONENT_KW)) {
+      const hay = cid === 'av_booth' ? t : tComp;
+      if (words.some((w) => hay.includes(w))) out.components.push(cid);
+    }
+    return out;
+  }
+
+  // ---------- floorplan ----------
+  const BANDS = [['stage', 'av_booth', 'lounge'], ['seating', 'dance_floor'], ['registration', 'buffet', 'photo_corner', 'booths']];
+  const COLORS = {
+    seating: '#cfe3f7', stage: '#f5c26b', av_booth: '#d9c2f0', lounge: '#f3b8c8', dance_floor: '#b9e6d3',
+    registration: '#ffe08a', buffet: '#f7b88b', photo_corner: '#c8d8f5', booths: '#d4e8a8',
+  };
+  const SHORT = { seating: 'ที่นั่ง', stage: 'เวที', av_booth: 'AV', lounge: 'VIP', dance_floor: 'ฟลอร์เต้น',
+    registration: 'ลงทะเบียน', buffet: 'อาหาร', photo_corner: 'ถ่ายภาพ', booths: 'บูธ' };
+  const ASPECT = 1.5, CHAR_W = 0.6, MIN_LABEL_H = 30, MIN_ONE_LINE_H = 16;
+  const shortName = (n) => n.split('(')[0].trim();
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // เลือกป้ายที่พอดีกล่อง (sqm ไม่ระบุ = โหมด 2 บรรทัด / ระบุ = โหมด 1 บรรทัดสำหรับกล่องเตี้ย)
+  function zoneLabel(id, name, widthPx, sqm) {
+    const short = SHORT[id] || name;
+    const options = sqm == null
+      ? [[name, 13], [name, 11], [short, 11], [short, 9]]
+      : [[`${name} ${g(sqm)} ตร.ม.`, 11], [`${name} ${g(sqm)}`, 11], [`${short} ${g(sqm)}`, 11], [`${short} ${g(sqm)}`, 9], [short, 9]];
+    for (const [text, fs] of options) {
+      if (text.length * CHAR_W * fs <= widthPx - 6) return { text, fs };
+    }
+    return { text: null, fs: null };
+  }
+
+  function layoutZones(zones, totalArea, subtotal) {
+    const width = Math.sqrt(totalArea * ASPECT);
+    const depth = totalArea / width;
+    const scale = Math.sqrt(subtotal / totalArea);
+    const iw = width * scale, idp = depth * scale;
+    const ox = (width - iw) / 2, oy = (depth - idp) / 2;
+    const byId = Object.fromEntries(zones.map((z) => [z.id, z]));
+    const rects = [];
+    let y = oy;
+    for (const band of BANDS) {
+      const members = band.filter((i) => byId[i]).map((i) => byId[i]);
+      if (!members.length) continue;
+      const bandArea = members.reduce((a, z) => a + z.sqm, 0);
+      const h = (idp * bandArea) / subtotal;
+      let x = ox;
+      for (const z of members) {
+        const w = (iw * z.sqm) / bandArea;
+        rects.push({ id: z.id, name: shortName(z.name_th), sqm: z.sqm, x, y, w, h });
+        x += w;
+      }
+      y += h;
+    }
+    return { width, depth, rects };
+  }
+
+  // สิ่งที่จะวาด (พิกเซล) — แยกไว้ให้ tests/compare_js เทียบกับ Python ได้
+  function scene(p, pxWidth) {
+    pxWidth = pxWidth || 680;
+    const a = p.area;
+    const sub = a.zones.reduce((s, z) => s + z.sqm, 0);
+    const { width, depth, rects } = layoutZones(a.zones, a.total, sub);
+    const k = pxWidth / width;
+    const boxes = rects.map((r) => {
+      const wPx = r.w * k, hPx = r.h * k;
+      let lines = 0, lab = { text: null, fs: null };
+      if (hPx > MIN_LABEL_H) { lines = 2; lab = zoneLabel(r.id, r.name, wPx); }
+      else if (hPx >= MIN_ONE_LINE_H) { lines = 1; lab = zoneLabel(r.id, r.name, wPx, r.sqm); }
+      return { id: r.id, name: r.name, sqm: r.sqm, x: 20 + r.x * k, y: 20 + r.y * k, w: wPx, h: hPx, label: lab.text, fs: lab.fs, lines };
+    });
+    return { width, depth, k, boxes };
+  }
+
+  function floorplanSvg(p, pxWidth) {
+    pxWidth = pxWidth || 680;
+    const a = p.area;
+    const { width, depth, k, boxes } = scene(p, pxWidth);
+    const hPx = depth * k;
+    const vbW = pxWidth + 40, vbH = (hPx + 70).toFixed(0);
+    const font = "Sarabun,'Noto Sans Thai','Segoe UI',Tahoma,sans-serif";
+    const parts = [
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbW} ${vbH}" width="100%" font-family="${font}" role="img" aria-label="ผังพื้นที่จัดงาน">`,
+      `<rect width="${vbW}" height="${vbH}" fill="#ffffff"/>`,
+      `<rect x="20" y="20" width="${pxWidth}" height="${hPx.toFixed(1)}" rx="6" fill="#fafafa" stroke="#555" stroke-width="2" stroke-dasharray="6 4"/>`,
+    ];
+    for (const b of boxes) {
+      parts.push(`<rect x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="${b.h.toFixed(1)}" fill="${COLORS[b.id] || '#ddd'}" stroke="#7a7a7a" stroke-width="1"><title>${esc(b.name + ' ' + g(b.sqm) + ' ตร.ม.')}</title></rect>`);
+      if (b.label) {
+        const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+        if (b.lines === 2) {
+          parts.push(`<text x="${cx.toFixed(1)}" y="${(cy - 2).toFixed(1)}" text-anchor="middle" font-size="${b.fs}" fill="#222">${esc(b.label)}</text>`);
+          parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 14).toFixed(1)}" text-anchor="middle" font-size="${Math.min(12, b.fs)}" fill="#444">${g(b.sqm)} ตร.ม.</text>`);
+        } else {
+          parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="${b.fs}" fill="#222">${esc(b.label)}</text>`);
+        }
+      }
+    }
+    parts.push(`<text x="${(20 + pxWidth / 2).toFixed(1)}" y="${(hPx + 40).toFixed(1)}" text-anchor="middle" font-size="13" fill="#333">▲ ทางเข้า · พื้นที่รวม ${g(a.total)} ตร.ม. (≈ ${width.toFixed(1)} × ${depth.toFixed(1)} ม., รวมทางสัญจร ${g(a.circulation)} ตร.ม.)</text>`);
+    parts.push('</svg>');
+    return parts.join('');
+  }
+
+  // ---------- AI layer ----------
+  function buildExtractPrompt(data) {
+    const d = data || getData();
+    const sys = d.prompts.extract_system
+      .replace('{EVENT_TYPES}', Object.keys(d.events).join(', '))
+      .replace('{LAYOUTS}', Object.keys(d.layouts).join(', '))
+      .replace('{COMPONENTS}', Object.keys(d.components).join(', '));
+    const shots = d.prompts.extract_examples
+      .map((x) => `Input: ${x.input}\nOutput: ${JSON.stringify(x.output)}`).join('\n\n');
+    return { system: sys, shots };
+  }
+
+  function sanitizeRequirements(raw, data) {
+    const d = data || getData();
+    const out = { event_type: null, people: null, tier: null, layout: null, components: [], budget_thb: null };
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    if (d.events[raw.event_type]) out.event_type = raw.event_type;
+    if (d.layouts[raw.layout]) out.layout = raw.layout;
+    if (d.tiers[raw.tier]) out.tier = raw.tier;
+    if (typeof raw.people === 'number' && raw.people > 0) out.people = Math.trunc(raw.people);
+    if (typeof raw.budget_thb === 'number' && raw.budget_thb > 0) out.budget_thb = Math.trunc(raw.budget_thb);
+    if (Array.isArray(raw.components)) {
+      out.components = Array.from(new Set(raw.components)).filter((c) => d.components[c]);
+    }
+    return out;
+  }
+
+  function extractJson(text) {
+    let t = String(text).trim().replace(/^```(?:json)?|```$/gm, '').trim();
+    const m = /\{[\s\S]*\}/.exec(t);
+    return JSON.parse(m ? m[0] : t);
+  }
+
+  // ---- เรียก Gemini จากเบราว์เซอร์โดยตรงด้วย key ของผู้ใช้เอง (ไม่เก็บ/ไม่ส่งไปที่อื่น) ----
+  const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+  // ไม่ระบุชื่อโมเดล = ลองตามลำดับนี้จนกว่าจะมีตัวที่ตอบได้ (รุ่นที่ Google ระบุว่าใช้ฟรีอยู่ก่อน)
+  const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
+  const TIMEOUT_MS = 12000;
+  const SKIP = ['preview', 'exp', 'image', 'tts', 'live', 'audio', 'embedding', 'aqa', 'thinking', 'vision', 'robotics', 'computer'];
+
+  // รหัส HTTP + สถานะ + ข้อความจริงจาก response body (ตัด key ออก ไม่เกิน 300 ตัวอักษร)
+  async function describeHttpError(res, key) {
+    let detail = '';
+    try {
+      const j = await res.json();
+      const e = j && j.error;
+      if (e && typeof e === 'object') detail = [e.status, e.message].filter(Boolean).join(' ');
+    } catch (_) { /* body ไม่ใช่ JSON */ }
+    let text = `HTTP ${res.status}` + (detail ? ' ' + detail : res.statusText ? ' ' + res.statusText : '');
+    if (key) text = text.split(key).join('***');
+    return text.slice(0, 300);
+  }
+
+  async function geminiFetch(path, key, init) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), TIMEOUT_MS) : null;
+    let res;
+    try {
+      res = await fetch(GEMINI_BASE + path, Object.assign(
+        { headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: ctl ? ctl.signal : undefined }, init));
+    } catch (e) {
+      throw new Error(e && e.name === 'AbortError' ? 'เชื่อมต่อไม่ได้ (หมดเวลา)' : 'เชื่อมต่อไม่ได้ (เครือข่ายถูกบล็อกหรือไม่มีอินเทอร์เน็ต)');
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if (!res.ok) {
+      const err = new Error(await describeHttpError(res, key));
+      err.status = res.status;
+      throw err;
+    }
+    return res.json();
+  }
+
+  async function callGemini(system, user, key, model, jsonMode) {
+    const gen = { temperature: 0.2 };
+    if (jsonMode) gen.responseMimeType = 'application/json';
+    const body = JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+      generationConfig: gen,
+    });
+    const candidates = model ? [model] : GEMINI_MODELS; // ผู้ใช้ระบุเอง = ใช้ตัวนั้นตัวเดียว
+    let first = null, last = null;
+    for (const m of candidates) {
+      try {
+        const data = await geminiFetch(`/models/${m}:generateContent`, key, { method: 'POST', body });
+        try { // โมเดลที่คิดก่อนตอบอาจคืนหลายส่วน (ส่วน thought ไม่ใช่คำตอบ) จึงรวมทุกส่วนที่เป็นข้อความ
+          return data.candidates[0].content.parts.filter((p) => !p.thought).map((p) => p.text || '').join('');
+        } catch (_) {
+          const why = (data.promptFeedback && JSON.stringify(data.promptFeedback)) || (data.candidates && data.candidates[0] && data.candidates[0].finishReason) || 'ไม่ทราบสาเหตุ';
+          throw new Error(`AI ตอบกลับโดยไม่มีข้อความ (${String(why).slice(0, 150)})`);
+        }
+      } catch (e) {
+        if (e.status === 400 || e.status === 401) throw e; // key ผิดรูปแบบ ลองโมเดลอื่นก็ไม่ช่วย
+        last = e; // 403/404/429/5xx/timeout: อาจเป็นแค่โมเดลนี้ ลองตัวถัดไป
+        if (!first && e.status !== 404) first = e; // เก็บเหตุผลแรกที่ไม่ใช่ "ไม่พบโมเดล" ไว้แสดง
+      }
+    }
+    throw first || last;
+  }
+
+  async function listGeminiModels(key) {
+    const data = await geminiFetch('/models?pageSize=200', key, { method: 'GET' });
+    return (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes('generateContent')).map((m) => m.name.split('/').pop());
+  }
+
+  function suggestModels(names, limit) {
+    return names.filter((n) => n.startsWith('gemini-') && n.includes('flash') && !SKIP.some((s) => n.includes(s)))
+      .sort().reverse().slice(0, limit || 5);
+  }
+
+  // ตรวจว่า key ใช้ได้ไหม และโมเดลที่จะใช้เรียกได้จริงไหม คืน { ok, text }
+  // ไม่ระบุโมเดล = ตรวจโมเดลสำรองที่ระบบลองตามลำดับ ว่ามีตัวไหนใช้ได้กับบัญชีนี้
+  async function testConnection(key, model) {
+    if (!key) return { ok: false, text: 'ยังไม่ได้ใส่ API key' };
+    const lines = [];
+    try {
+      const names = await listGeminiModels(key);
+      lines.push(`key ใช้ได้ พบโมเดลที่เรียกใช้ได้ ${names.length} ตัว`);
+      let usable;
+      if (model) {
+        usable = names.includes(model) ? [model] : [];
+        if (!usable.length) {
+          const sug = suggestModels(names);
+          lines.push(`ไม่พบโมเดล '${model}' ในบัญชีนี้` + (sug.length ? ` — ลองใช้: ${sug.join(', ')}` : ''));
+          return { ok: false, text: lines.join('\n') };
+        }
+      } else {
+        usable = GEMINI_MODELS.filter((m) => names.includes(m));
+        if (!usable.length) {
+          const sug = suggestModels(names);
+          lines.push('ไม่พบโมเดลสำรองที่ระบบใช้ในบัญชีนี้' + (sug.length ? ` — ลองใช้: ${sug.join(', ')}` : ''));
+          return { ok: false, text: lines.join('\n') };
+        }
+        lines.push(`โมเดลสำรองที่ใช้ได้กับบัญชีนี้: ${usable.join(', ')}`);
+      }
+      const reply = await callGemini('Reply with the single word OK.', 'ping', key, usable[0], false);
+      lines.push(`เรียกโมเดล '${usable[0]}' สำเร็จ (ตอบกลับ: ${reply.trim().slice(0, 40)})`);
+      return { ok: true, text: lines.join('\n') };
+    } catch (e) {
+      lines.push('ล้มเหลว: ' + (e && e.message || e));
+      return { ok: false, text: lines.join('\n') };
+    }
+  }
+
+  async function extractRequirements(text, opts) {
+    opts = opts || {};
+    const llm = opts.llm || callGemini;
+    if (opts.key) {
+      try {
+        const { system, shots } = buildExtractPrompt();
+        const reply = await llm(system, `${shots}\n\nInput: ${text}\nOutput:`, opts.key, opts.model, true);
+        return { req: sanitizeRequirements(extractJson(reply)), source: 'llm', error: null };
+      } catch (e) {
+        return { req: parseRequest(text), source: 'rules', error: String(e && e.message || e) };
+      }
+    }
+    return { req: parseRequest(text), source: 'rules', error: null };
+  }
+
+  function planSummaryForLlm(p) {
+    return {
+      inputs: p.inputs,
+      area: { seating: p.area.seating, total: p.area.total, circulation: p.area.circulation,
+        recommended_min_venue: p.area.recommended_min_venue, zones: p.area.zones },
+      total_cost: p.total_cost, cost_per_person: p.cost_per_person, tier_options: p.tier_options,
+      budget: p.budget, safety: p.safety, equipment_count: p.equipment.length,
+    };
+  }
+
+  function ruleBasedAdvice(p) {
+    const i = p.inputs, a = p.area, s = p.safety;
+    const tips = [
+      `- แผน${i.event_name_th} ${fmt(i.people)} คน แบบ${i.layout_name_th} ใช้พื้นที่รวม ${g(a.total)} ตร.ม. ` +
+        `(ที่นั่ง ${g(a.seating)} + ส่วนประกอบอื่น ${(a.subtotal - a.seating).toFixed(1)} + ทางสัญจร ${g(a.circulation)}) ` +
+        `ควรหาสถานที่ไม่ต่ำกว่า ${fmt(a.recommended_min_venue)} ตร.ม.`,
+      `- ความปลอดภัย: ควรมีทางออกอย่างน้อย ${s.exits} จุด ความกว้างรวมไม่ต่ำกว่า ${g(s.exit_width_total_m)} ม. ` +
+        `ห้องน้ำประมาณ ${s.toilets} ที่ และเพดานสูงไม่ต่ำกว่า ${g(s.ceiling_height_min_m)} ม.`,
+    ];
+    if (i.components.includes('buffet')) tips.push('- โซนอาหาร: ตั้งจุดบริการแยกจากทางเข้างานและทางเดินหลักเพื่อลดคิวติดขัด');
+    const b = p.budget;
+    const opts = Object.fromEntries(p.tier_options.map((o) => [o.tier, o]));
+    if (b) {
+      if (b.within_budget) tips.push(`- งบที่ตั้งไว้ ${fmt(b.budget_thb)} บาท เพียงพอ เหลือประมาณ ${fmt(b.difference)} บาท สำหรับสำรองหน้างาน`);
+      else if (b.recommended_tier) {
+        const o = opts[b.recommended_tier];
+        tips.push(`- งบเกินประมาณ ${fmt(-b.difference)} บาท ลองลดเป็นระดับ '${o.name_th}' (ประมาณ ${fmt(o.total_cost)} บาท) จะอยู่ในงบ`);
+      } else {
+        tips.push(`- แม้ระดับประหยัดก็ยังเกินงบ (ประมาณ ${fmt(opts.basic.total_cost)} บาท) ลองลดจำนวนคนหรือตัดส่วนประกอบที่ไม่จำเป็น`);
+      }
+    } else {
+      tips.push('- ยังไม่ได้ระบุงบ: เทียบตารางระดับงบด้านล่างเพื่อเลือกที่เหมาะกับเป้าหมายงาน');
+    }
+    return tips.join('\n');
+  }
+
+  async function advise(p, text, opts) {
+    opts = opts || {};
+    const llm = opts.llm || callGemini;
+    if (opts.key) {
+      try {
+        const user = `โจทย์ของผู้ใช้: ${text || '-'}\n\nข้อมูลแผน (JSON):\n${JSON.stringify(planSummaryForLlm(p))}`;
+        const reply = await llm(getData().prompts.advise_system, user, opts.key, opts.model, false);
+        if (reply && reply.trim()) return { text: reply.trim(), source: 'llm', error: null };
+        throw new Error('LLM ตอบกลับว่างเปล่า');
+      } catch (e) {
+        return { text: ruleBasedAdvice(p), source: 'rules', error: String(e && e.message || e) };
+      }
+    }
+    return { text: ruleBasedAdvice(p), source: 'rules', error: null };
+  }
+
+  // ---------- CSV ----------
+  function checklistCsv(p) {
+    const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+    const rows = [['หมวด', 'รายการ', 'จำนวน', 'หน่วย', 'ราคาต่อหน่วย (บาท)', 'รวม (บาท)']];
+    p.equipment.forEach((e) => rows.push([e.category_th, e.name_th, e.qty, e.unit, e.unit_price, e.total_price]));
+    rows.push(['', 'รวมทั้งหมด', '', '', '', p.total_cost]);
+    return '﻿' + rows.map((r) => r.map(q).join(',')).join('\r\n');
+  }
+
+  root.Planner = {
+    TIER_ORDER, getData, prepare, plan, parseRequest, layoutZones, scene, zoneLabel, floorplanSvg, buildExtractPrompt,
+    sanitizeRequirements, extractRequirements, advise, testConnection, suggestModels, describeHttpError, ruleBasedAdvice, planSummaryForLlm, checklistCsv,
+    fmt, g,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = root.Planner;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+  <script>
+/* ตัวเชื่อมหน้าเว็บ (index.html) เข้ากับ Planner (assets/planner.js) */
+(function () {
+  'use strict';
+  const P = window.Planner;
+  const D = P.getData();
+  const $ = (id) => document.getElementById(id);
+  const EXAMPLES = [
+    'งานสัมมนา 100 คน มีเวทีและซุ้มอาหาร งบ 5 หมื่นบาท',
+    'งานแต่งงาน 250 คน โต๊ะจีน ระดับพรีเมียม มีฟลอร์เต้น',
+    'Networking cocktail party for 80 people with buffet, budget 40k',
+  ];
+  const state = { event_type: 'seminar', people: 100, tier: 'standard', layout: 'theater', components: [], budget: null, plan: null, adviceText: null };
+
+  const el = (tag, attrs, ...kids) => {
+    const n = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (k === 'text') n.textContent = v;
+      else if (v === true) n.setAttribute(k, '');
+      else if (v !== false && v != null) n.setAttribute(k, v);
+    });
+    kids.flat().forEach((c) => n.append(c));
+    return n;
+  };
+  const baht = (n) => P.fmt(n);
+
+  // ---------- build form ----------
+  function buildStatic() {
+    $('ev').replaceChildren(...Object.values(D.events).map((e) => el('option', { value: e.id, text: e.name_th })));
+    $('tier').replaceChildren(...P.TIER_ORDER.map((t) => {
+      const input = el('input', { type: 'radio', name: 'tier', value: t });
+      return el('label', {}, input, D.tiers[t].name_th);
+    }));
+    $('comps').replaceChildren(...Object.values(D.components).map((c) => {
+      const input = el('input', { type: 'checkbox', name: 'comp', value: c.id });
+      return el('label', {}, input, c.name_th);
+    }));
+    $('examples').replaceChildren(...EXAMPLES.map((t) => {
+      const b = el('button', { type: 'button', text: t.length > 28 ? t.slice(0, 28) + '…' : t, title: t });
+      b.addEventListener('click', () => { $('intake').value = t; readText(); });
+      return b;
+    }));
+  }
+
+  function syncForm() {
+    const ev = D.events[state.event_type];
+    $('ev').value = state.event_type;
+    $('people').min = ev.min_people;
+    $('people').max = ev.max_people;
+    $('people').value = state.people;
+    $('layout').replaceChildren(...ev.allowed_layouts.map((l) => el('option', { value: l, text: D.layouts[l].name_th })));
+    $('layout').value = state.layout;
+    document.querySelectorAll('input[name=tier]').forEach((r) => { r.checked = r.value === state.tier; });
+    document.querySelectorAll('input[name=comp]').forEach((c) => { c.checked = state.components.includes(c.value); });
+    $('budget').value = state.budget || '';
+  }
+
+  function resetForEvent(id) {
+    const ev = D.events[id];
+    state.event_type = id;
+    state.layout = ev.default_layout;
+    state.components = ev.default_components.slice();
+    state.people = Math.min(Math.max(state.people, ev.min_people), ev.max_people);
+  }
+
+  // ---------- render ----------
+  function render() {
+    const err = $('error');
+    let p;
+    try {
+      p = P.plan(state.event_type, state.people, state.tier, state.layout, state.components, state.budget || null);
+    } catch (e) {
+      err.textContent = e.message;
+      err.hidden = false;
+      $('out').hidden = true;
+      $('out2').hidden = true;
+      return;
+    }
+    err.hidden = true;
+    $('out').hidden = false;
+    $('out2').hidden = false;
+    state.plan = p;
+    state.adviceText = null;
+
+    $('plan-svg').innerHTML = P.floorplanSvg(p);
+    const kpi = (label, value, unit) => el('div', {}, el('dt', { text: label }), el('dd', {}, value, unit ? el('small', { text: unit }) : ''));
+    $('kpis').replaceChildren(
+      kpi('พื้นที่รวมที่ต้องใช้', P.g(p.area.total), 'ตร.ม.'),
+      kpi('สถานที่ควรไม่เล็กกว่า', baht(p.area.recommended_min_venue), 'ตร.ม.'),
+      kpi('งบประมาณโดยประมาณ', baht(p.total_cost), 'บาท'),
+      kpi('ต่อคน', baht(p.cost_per_person), 'บาท'),
+      kpi('รายการอุปกรณ์', String(p.equipment.length), 'รายการ'));
+
+    const bn = $('budget-note');
+    const b = p.budget;
+    if (b) {
+      bn.hidden = false;
+      bn.classList.toggle('over', !b.within_budget);
+      if (b.within_budget) bn.textContent = `อยู่ในงบ ${baht(b.budget_thb)} บาท เหลือประมาณ ${baht(b.difference)} บาท`;
+      else if (b.recommended_tier) bn.textContent = `เกินงบประมาณ ${baht(-b.difference)} บาท — ระดับ '${D.tiers[b.recommended_tier].name_th}' จะอยู่ในงบ`;
+      else bn.textContent = `เกินงบประมาณ ${baht(-b.difference)} บาท และแม้ระดับประหยัดก็ยังเกิน ลองลดจำนวนคนหรือส่วนประกอบ`;
+    } else bn.hidden = true;
+
+    const th = (t, cls) => el('th', { scope: 'col', class: cls || null, text: t });
+    const td = (t, cls) => el('td', { class: cls || null, text: t });
+    $('tiers-table').replaceChildren(
+      el('thead', {}, el('tr', {}, th('ระดับงบ'), th('พื้นที่ (ตร.ม.)', 'num'), th('งบรวม (บาท)', 'num'), th('ต่อคน', 'num'))),
+      el('tbody', {}, ...p.tier_options.map((o) => {
+        const tr = el('tr', { 'aria-current': o.tier === p.inputs.tier ? 'true' : null },
+          td(o.name_th + (o.tier === p.inputs.tier ? ' (ที่เลือก)' : '')), td(P.g(o.total_area), 'num'), td(baht(o.total_cost), 'num'), td(baht(o.cost_per_person), 'num'));
+        return tr;
+      })));
+
+    const a = p.area;
+    $('zones-table').replaceChildren(
+      el('thead', {}, el('tr', {}, th('โซน'), th('พื้นที่ (ตร.ม.)', 'num'))),
+      el('tbody', {}, ...a.zones.map((z) => el('tr', {}, td(z.name_th), td(P.g(z.sqm), 'num'))),
+        el('tr', {}, td(`ทางสัญจร (${Math.round(a.circulation_ratio * 100)}%)`), td(P.g(a.circulation), 'num'))),
+      el('tfoot', {}, el('tr', {}, td('รวม'), td(P.g(a.total), 'num'))));
+    const s = p.safety;
+    $('safety').textContent = `ความปลอดภัยเบื้องต้น: ทางออกอย่างน้อย ${s.exits} จุด กว้างรวมไม่ต่ำกว่า ${P.g(s.exit_width_total_m)} ม. · ห้องน้ำประมาณ ${s.toilets} ที่ · เพดานสูงไม่ต่ำกว่า ${P.g(s.ceiling_height_min_m)} ม. · ${s.seat_unit_name} ${baht(s.seat_units)} ชุด`;
+
+    $('checklist').replaceChildren(
+      ...p.equipment_groups.map((g) => el('div', { class: 'group' },
+        el('h3', {}, g.name_th, el('span', { text: `${baht(g.subtotal)} บาท` })),
+        el('table', {},
+          el('thead', {}, el('tr', {}, th('รายการ'), th('จำนวน', 'num'), th('หน่วย'), th('ราคา/หน่วย', 'num'), th('รวม (บาท)', 'num'))),
+          el('tbody', {}, ...g.items.map((e) => el('tr', {}, td(e.name_th), td(baht(e.qty), 'num'), td(e.unit), td(baht(e.unit_price), 'num'), td(baht(e.total_price), 'num'))))))),
+      el('p', {}, el('strong', { text: `รวมทั้งหมด ${baht(p.total_cost)} บาท` })));
+
+    showAdvice(P.ruleBasedAdvice(p), null);
+    $('btn-advice').hidden = !aiKey();
+  }
+
+  function showAdvice(text, note) {
+    $('advice').replaceChildren(...text.split('\n').filter(Boolean).map((l) => el('li', { text: l.replace(/^[-*•]\s*/, '') })));
+    $('advice-src').textContent = note || (aiKey() ? 'คำแนะนำจากแม่แบบ — กดปุ่มด้านล่างเพื่อให้ AI เขียนเฉพาะแผนนี้' : 'คำแนะนำจากแม่แบบ (ไม่ได้ใช้ AI) — ใส่ Gemini API key เพื่อให้ AI เขียนคำแนะนำเฉพาะงานนี้');
+  }
+
+  const aiKey = () => $('ai-key').value.trim() || null;
+  const aiModel = () => $('ai-model').value.trim() || undefined;
+
+  // ---------- events ----------
+  function readForm() {
+    state.event_type = $('ev').value;
+    state.people = parseInt($('people').value, 10);
+    state.layout = $('layout').value;
+    const t = document.querySelector('input[name=tier]:checked');
+    state.tier = t ? t.value : 'standard';
+    state.components = Array.from(document.querySelectorAll('input[name=comp]:checked')).map((c) => c.value);
+    const b = parseFloat($('budget').value);
+    state.budget = b > 0 ? b : null;
+  }
+
+  async function readText() {
+    const btn = $('btn-read'), status = $('intake-status'), notices = $('intake-notices');
+    btn.disabled = true;
+    status.textContent = aiKey() ? 'กำลังให้ AI อ่านโจทย์…' : 'กำลังอ่านโจทย์…';
+    notices.replaceChildren();
+    try {
+      const r = await P.extractRequirements($('intake').value, { key: aiKey(), model: aiModel() });
+      const req = r.req, msgs = [];
+      if (req.event_type) state.event_type = req.event_type;
+      const ev = D.events[state.event_type];
+      state.layout = ev.allowed_layouts.includes(req.layout) ? req.layout : ev.default_layout;
+      if (req.layout && !ev.allowed_layouts.includes(req.layout)) msgs.push(`${ev.name_th} ไม่รองรับ layout ที่ระบุ จึงใช้ค่าเริ่มต้นแทน`);
+      state.components = Array.from(new Set(ev.default_components.concat(req.components)));
+      if (req.people) {
+        const n = Math.min(Math.max(req.people, ev.min_people), ev.max_people);
+        if (n !== req.people) msgs.push(`${ev.name_th} รองรับ ${baht(ev.min_people)}-${baht(ev.max_people)} คน จึงปรับจาก ${baht(req.people)} เป็น ${baht(n)}`);
+        state.people = n;
+      } else state.people = Math.min(Math.max(state.people, ev.min_people), ev.max_people);
+      state.tier = req.tier || 'standard'; // โจทย์ใหม่ที่ไม่ระบุระดับงบ ต้องไม่ค้างค่าจากโจทย์เก่า
+      state.budget = req.budget_thb || null;
+      const found = Object.values(req).filter((v) => v !== null && !(Array.isArray(v) && !v.length)).length;
+      status.textContent = `อ่านโดย${r.source === 'llm' ? ' AI (Gemini)' : 'ตัวอ่านโจทย์แบบ rule-based'}: พบ ${found} ข้อมูล ตรวจและแก้ในฟอร์มได้`;
+      if (r.error) msgs.push(`เรียก AI ไม่สำเร็จ (${r.error}) จึงใช้ตัวอ่านโจทย์แบบ rule-based แทน`);
+      notices.replaceChildren(...msgs.map((m) => el('li', { text: m })));
+    } finally {
+      btn.disabled = false;
+    }
+    syncForm();
+    render();
+  }
+
+  async function askAi() {
+    if (!state.plan) return;
+    const btn = $('btn-advice');
+    btn.disabled = true;
+    $('advice-src').textContent = 'กำลังให้ AI วิเคราะห์…';
+    try {
+      const r = await P.advise(state.plan, $('intake').value, { key: aiKey(), model: aiModel() });
+      showAdvice(r.text, r.source === 'llm' ? 'เขียนโดย AI (Gemini) จากตัวเลขที่คำนวณแล้วเท่านั้น' : `เรียก AI ไม่สำเร็จ (${r.error}) จึงแสดงคำแนะนำแบบแม่แบบแทน`);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function download(name, text, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = el('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function init() {
+    buildStatic();
+    resetForEvent('seminar');
+    syncForm();
+    $('ev').addEventListener('change', () => { resetForEvent($('ev').value); syncForm(); render(); });
+    ['people', 'layout', 'budget'].forEach((id) => $(id).addEventListener('input', () => { readForm(); render(); }));
+    $('layout').addEventListener('change', () => { readForm(); render(); });
+    $('tier').addEventListener('change', () => { readForm(); render(); });
+    $('comps').addEventListener('change', () => { readForm(); render(); });
+    $('btn-test').addEventListener('click', async () => {
+      const btn = $('btn-test'), out = $('ai-test');
+      btn.disabled = true;
+      out.hidden = false;
+      out.className = 'ai-test';
+      out.textContent = 'กำลังตรวจ key และโมเดล…';
+      try {
+        const r = await P.testConnection(aiKey(), aiModel());
+        out.textContent = r.text;
+        out.classList.toggle('bad', !r.ok);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    $('btn-read').addEventListener('click', readText);
+    $('btn-advice').addEventListener('click', askAi);
+    $('ai-key').addEventListener('input', () => { $('btn-advice').hidden = !aiKey() || !state.plan; if (state.plan) showAdvice(P.ruleBasedAdvice(state.plan), null); });
+    $('btn-csv').addEventListener('click', () => state.plan && download('event_checklist.csv', P.checklistCsv(state.plan), 'text/csv;charset=utf-8'));
+    $('btn-print').addEventListener('click', () => window.print());
+    readText();
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>
